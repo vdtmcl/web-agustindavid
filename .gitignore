@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.vite/
+*.local
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret
+.secrets/
+
+# Local media is kept outside the web build until it is intentionally published.
+VIDEOS/
+
+# TypeScript incremental build information
+*.tsbuildinfo
