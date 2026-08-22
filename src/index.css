@@ -40,8 +40,8 @@ h2 { margin: 0; color: #f2f0ed; font-size: clamp(2rem, 3.8vw, 3.35rem); font-wei
 .video-poster { position: relative; padding: 0; border: 0; cursor: pointer; background: #0c0c0c; }
 .video-poster::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.1); transition: background .25s ease; }
 .video-poster:hover::after, .video-poster:focus-visible::after { background: rgba(0,0,0,.36); }
-.play-button { position: absolute; z-index: 1; top: 50%; left: 50%; display: grid; place-items: center; width: 49px; height: 49px; padding-left: 3px; border: 1px solid #f2f0ed; border-radius: 50%; color: #f2f0ed; font-size: 13px; transform: translate(-50%, -50%); transition: background .2s ease, color .2s ease, transform .2s ease; }
-.video-poster:hover .play-button, .video-poster:focus-visible .play-button { color: #050505; background: #f2f0ed; transform: translate(-50%, -50%) scale(1.06); }
+
+
 .expand-button { position: absolute; z-index: 2; top: 7px; right: 7px; display: grid; place-items: center; width: 27px; height: 27px; padding: 0 0 2px; border: 1px solid rgba(242,240,237,.58); border-radius: 2px; color: #f2f0ed; background: rgba(5,5,5,.42); cursor: pointer; font-size: 16px; line-height: 1; opacity: .72; transition: background .2s ease, color .2s ease, opacity .2s ease; }
 .expand-button:hover, .expand-button:focus-visible { color: #050505; background: #f2f0ed; opacity: 1; }
 .site-footer { display: flex; justify-content: space-between; gap: 20px; padding: 25px clamp(28px, 5vw, 72px); border-top: 1px solid #242424; color: #777573; font-size: 11px; letter-spacing: .05em; }
