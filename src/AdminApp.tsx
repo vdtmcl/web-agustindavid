@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
 import type { ContentItem, PhotoItem } from "./content";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -134,7 +134,7 @@ function PhotoEditor({ item, onReload }: { item: ContentItem; onReload: () => vo
     }
   };
 
-  const reorderFromDrop = (event: React.DragEvent, targetId: string) => {
+  const reorderFromDrop = (event: DragEvent, targetId: string) => {
     event.preventDefault();
     const sourceId = event.dataTransfer.getData("text/plain");
     const from = photos.findIndex((photo) => photo.id === sourceId);
