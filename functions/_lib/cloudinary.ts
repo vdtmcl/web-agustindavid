@@ -26,7 +26,7 @@ async function sha1(value: string) {
 export async function uploadImage(file: File, env: any, folder: string) {
   if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) throw new Error("Cloudinary no está configurado.");
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  const publicId = folder + "/" + crypto.randomUUID();
+  const publicId = crypto.randomUUID();
   const signature = await sha1("folder=" + folder + "&public_id=" + publicId + "&timestamp=" + timestamp + env.CLOUDINARY_API_SECRET);
   const form = new FormData();
   form.set("file", file);
