@@ -5,6 +5,10 @@ type OriginPoint = { x: number; y: number };
 const cloudinaryBase = "https://res.cloudinary.com/vdtm-cl/video/upload";
 
 const videos: VideoItem[] = [
+  { publicId: "el_arte_transforma_la_educaciÓn_v1_720p_itt6io", format: "mp4" },
+  { publicId: "AGUSTÍN_ARIAS_-_REEL_ACADEMICO_ieqbhj", format: "mp4" },
+  { publicId: "CINEMAGRAPH_BHAVANI_KALI_lvcot8", format: "mp4" },
+  { publicId: "AQMfW613_q3CWaia67pBW0dmflSSNKMvDSIDvWKnybbG7hwjgFp-1sQe1uHBWfGoL8JwsO4PDqXeQCz8yXflt41__u3ovdu", format: "mp4" },
   { publicId: "YEREL-compARTEVALPO_eju8bh", format: "mp4" },
   { publicId: "ESTEBAN-ALVAREZ-compARTEVALPO_kx2zar", format: "mp4" },
   { publicId: "AGUSTÍN_-_compARTEVALPO_iik5ia", format: "mp4" },
@@ -18,8 +22,9 @@ const videos: VideoItem[] = [
 ];
 const featuredVideo: VideoItem = { publicId: "Reel_2019_-24_f5i4bn", format: "mov" };
 
-function getPoster(video: VideoItem, seconds = 3) { return video.poster || `${cloudinaryBase}/so_${seconds},w_1280,h_720,c_fill,q_auto/${video.publicId}.jpg`; }
-function getVideoUrl(video: VideoItem) { return `${cloudinaryBase}/f_${video.format},q_auto/${video.publicId}.${video.format}`; }
+function encodePublicId(publicId: string) { return publicId.split("/").map(encodeURIComponent).join("/"); }
+function getPoster(video: VideoItem, seconds = 3) { return video.poster || `${cloudinaryBase}/so_${seconds},w_1280,h_720,c_fill,q_auto/${encodePublicId(video.publicId)}.jpg`; }
+function getVideoUrl(video: VideoItem) { return `${cloudinaryBase}/f_${video.format},q_auto/${encodePublicId(video.publicId)}.${video.format}`; }
 function getOrigin(element: HTMLVideoElement) { const rect = element.getBoundingClientRect(); return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; }
 
 function FeaturedVideo({ video, onExpand }: { video: VideoItem; onExpand: (video: VideoItem, origin: OriginPoint) => void }) {
