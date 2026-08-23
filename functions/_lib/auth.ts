@@ -66,7 +66,8 @@ export async function requireAuth(request: Request, env: any) {
 }
 
 export async function login(request: Request, env: any) {
-  const configuredHash = env.ADMIN_PASSWORD_HASH || (env.ADMIN_PASSWORD ? await sha256(env.ADMIN_PASSWORD) : "");\n  if (!configuredHash || !env.SESSION_SECRET) return json({ error: "La autenticación aún no está configurada." }, { status: 503 });
+  const configuredHash = env.ADMIN_PASSWORD_HASH || (env.ADMIN_PASSWORD ? await sha256(env.ADMIN_PASSWORD) : "");
+  if (!configuredHash || !env.SESSION_SECRET) return json({ error: "La autenticación aún no está configurada." }, { status: 503 });
   const ip = getClientIp(request);
   const bucket = ip + ":" + Math.floor(Date.now() / 900000);
   const attempt = env.DB ? await env.DB.prepare("SELECT attempts FROM auth_attempts WHERE bucket = ?1").bind(bucket).first() : null;
