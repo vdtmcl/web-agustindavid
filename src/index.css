@@ -136,3 +136,10 @@ h2 { margin: 0; color: #f2f0ed; font-size: clamp(2rem, 3.8vw, 3.35rem); font-wei
 .admin-photo-grid img { display: block; width: 28px; height: 20px; object-fit: cover; }
 @media (max-width: 800px) { .video-card-large { grid-column: span 1; } .admin-header { display: block; } .admin-header-actions { justify-content: start; margin-top: 22px; } .admin-row { grid-template-columns: 1fr; } .admin-row-actions { justify-content: start; } }
 @media (max-width: 560px) { .photo-lightbox { padding: 12px; } .photo-lightbox-panel { padding: 14px; } .admin-shell { padding: 24px 16px; } .admin-row-main > img { width: 82px; } .admin-album-editor { align-items: start; flex-direction: column; } }
+.admin-select { display: flex; align-items: center; gap: 6px; color: #aaa8a6; font-size: 11px; }
+.admin-select select { padding: 6px 8px; border: 1px solid #444; color: #f2f0ed; background: #111; font: inherit; }
+.admin-photo-item { position: relative; width: 28px; height: 30px; cursor: grab; }
+.admin-photo-item img { width: 28px; height: 20px; }
+.admin-photo-actions { position: absolute; right: -2px; bottom: -1px; display: flex; gap: 1px; }
+.admin-photo-actions button { width: 14px; height: 12px; padding: 0; border: 0; color: #f2f0ed; background: rgba(5,5,5,.85); cursor: pointer; font-size: 9px; line-height: 10px; }
+.admin-photo-actions button:disabled { color: #555; cursor: default; }
