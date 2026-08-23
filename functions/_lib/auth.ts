@@ -66,14 +66,14 @@ export async function requireAuth(request: Request, env: any) {
 }
 
 export async function login(request: Request, env: any) {
-  if (!env.ADMIN_PASSWORD_HASH || !env.SESSION_SECRET) return json({ error: "La autenticación aún no está configurada." }, { status: 503 });
+  const configuredHash = env.ADMIN_PASSWORD_HASH || (env.ADMIN_PASSWORD ? await sha256(env.ADMIN_PASSWORD) : "");\n  if (!configuredHash || !env.SESSION_SECRET) return json({ error: "La autenticación aún no está configurada." }, { status: 503 });
   const ip = getClientIp(request);
   const bucket = ip + ":" + Math.floor(Date.now() / 900000);
   const attempt = env.DB ? await env.DB.prepare("SELECT attempts FROM auth_attempts WHERE bucket = ?1").bind(bucket).first() : null;
   if (attempt && Number(attempt.attempts) >= 8) return json({ error: "Demasiados intentos. Espera unos minutos." }, { status: 429 });
   let body: { password?: string };
   try { body = await request.json(); } catch { return json({ error: "Solicitud inválida." }, { status: 400 }); }
-  const valid = typeof body.password === "string" && await same(await sha256(body.password), env.ADMIN_PASSWORD_HASH);
+  const valid = typeof body.password === "string" && await same(await sha256(body.password), configuredHash);
   if (!valid) {
     if (env.DB) await env.DB.prepare("INSERT INTO auth_attempts (id, bucket, attempts, updated_at) VALUES (?1, ?2, 1, ?3) ON CONFLICT(bucket) DO UPDATE SET attempts = attempts + 1, updated_at = excluded.updated_at").bind(crypto.randomUUID(), bucket, Date.now()).run();
     return json({ error: "Contraseña incorrecta." }, { status: 401 });
