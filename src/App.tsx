@@ -5,6 +5,17 @@ type OriginPoint = { x: number; y: number };
 const cloudinaryBase = "https://res.cloudinary.com/vdtm-cl/video/upload";
 
 const videos: VideoItem[] = [
+  { publicId: "Lanchada_Panzer_-_125_años_Santiago_Wanderers_hy8fyo", format: "mp4" },
+  { publicId: "Celebración_Ascenso_Santiago_Wanderers_-_Valparaíso_-_8_de_Diciembre_inlyti", format: "mp4" },
+  { publicId: "Cueca_Arriba_mi_Wanderito_-_125_años_Santiago_Wanderers_fmurpk", format: "mp4" },
+  { publicId: "Matrimonio_03_dlytpb", format: "mov" },
+  { publicId: "Matrimonio_02_uqwst0", format: "mov" },
+  { publicId: "Matrimonio_01_zzzyo0", format: "mov" },
+  { publicId: "Spot_Balmaceda_-_Final_qnwlwv", format: "mp4" },
+  { publicId: "Cápsula_Instagram_-_Huerto_Orgánico_USM_h5eeom", format: "mp4" },
+  { publicId: "Nodo_Valpo_-_Presentación_para_redes_sociales_htegjx", format: "mp4" },
+  { publicId: "Nodo_Valpo_-_Cómo_llegar_para_redes_sociales_f1uv4g", format: "mp4" },
+  { publicId: "Adelanto_Escenacinco_vqvbw3", format: "mp4" },
   { publicId: "Payaso_Escenacinco_uywts3", format: "mov" },
   { publicId: "Monociclo_Escenacinco_scfry0", format: "mp4" },
   { publicId: "Manipulación_de_Balones_Escenacinco_goobog", format: "mp4" },
@@ -43,8 +54,6 @@ const videos: VideoItem[] = [
   { publicId: "JORGE_ROJAS_-_compARTEVALPO_cwriwl", format: "mp4" },
   { publicId: "BHAVANI_KALI_compARTEVALPO_bkardo", format: "mp4" },
   { publicId: "MONGOLO_-_compARTEVALPO_xcdipt", format: "mp4" },
-  { publicId: "Intro_escenacinco_2018_-_escenacinco_Circo_Valparaíso_anuruu", format: "mp4" },
-  { publicId: "Teaser_escenacinco_Circo_Valparaíso_gkxpud", format: "mp4" },
 ];
 const featuredVideo: VideoItem = { publicId: "Reel_2019_-24_f5i4bn", format: "mov" };
 
