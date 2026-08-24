@@ -24,6 +24,7 @@ function useVisibleAutoplay(ref: RefObject<HTMLVideoElement | null>, enabled: bo
 function FeaturedVideo({ item, onExpand }: { item: ContentItem; onExpand: (item: ContentItem, origin: Origin) => void }) {
   const [playing, setPlaying] = useState(item.autoplay);
   const ref = useRef<HTMLVideoElement>(null);
+  useVisibleAutoplay(ref, item.autoplay);
   const start = () => {
     const video = ref.current;
     if (!video || !item.autoplay) return;
