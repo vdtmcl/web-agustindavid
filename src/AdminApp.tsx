@@ -157,7 +157,7 @@ function PhotoEditor({ item, onReload }: { item: ContentItem; onReload: () => vo
       </div>
       <div className={gridClass}>
         {photos.map((photo, index) => (
-          <div className="admin-photo-item" key={photo.id} draggable onDragStart={(event) => event.dataTransfer.setData("text/plain", photo.id)} onDragOver={(event) => event.preventDefault()} onDrop={(event) => reorderFromDrop(event, photo.id)}>
+          <div className="admin-photo-item" key={photo.id} draggable onDragStart={(event) => { event.stopPropagation(); event.dataTransfer.setData("text/plain", photo.id); }} onDragOver={(event) => { event.preventDefault(); event.stopPropagation(); }} onDrop={(event) => { event.stopPropagation(); reorderFromDrop(event, photo.id); }}>
             <img src={photo.thumbUrl} alt={photo.alt || "Fotografía"} />
             <div className="admin-photo-actions">
               <button type="button" onClick={() => movePhoto(index, -1)} disabled={index === 0 || savingOrder} aria-label="Mover fotografía arriba">↑</button>
@@ -198,7 +198,8 @@ function AdminApp() {
   const saveOrder = async (next: ContentItem[]) => {
     const previous = items;
     setHistory((stack) => [...stack.slice(-19), previous]);
-    setItems(next.map((item, index) => ({ ...item, position: index })));
+    const heroItem = items.find((item) => item.placement === "hero");
+    setItems([...(heroItem ? [heroItem] : []), ...next.map((item, index) => ({ ...item, position: index }))]);
     setStatus("saving");
     setError("");
     try {
