@@ -5,6 +5,32 @@ type OriginPoint = { x: number; y: number };
 const cloudinaryBase = "https://res.cloudinary.com/vdtm-cl/video/upload";
 
 const videos: VideoItem[] = [
+  { publicId: "Payaso_Escenacinco_uywts3", format: "mov" },
+  { publicId: "Monociclo_Escenacinco_scfry0", format: "mp4" },
+  { publicId: "Manipulación_de_Balones_Escenacinco_goobog", format: "mp4" },
+  { publicId: "Hula_Hoop_Escenacinco_frsu2w", format: "mov" },
+  { publicId: "Bautizo_Maximiliano_Andrés_jmhbdw", format: "mp4" },
+  { publicId: "Ensamble_Comunitario_-_Casa_Ckoi_bqa6jl", format: "mp4" },
+  { publicId: "Mercado_Puerto_de_Valparaíso_-_Reapertura_2020_e7hgjm", format: "mp4" },
+  { publicId: "Comedor_Comunitario_El_Olivar_Viña_del_Mar_c6dm7g", format: "mp4" },
+  { publicId: "Trapecio_Fijo_Escenacinco_oed5sq", format: "mp4" },
+  { publicId: "Clavas_Escenacinco_oynfuu", format: "mp4" },
+  { publicId: "Institucional_Sansanito_-_Punto_UTFSM_an5rhn", format: "mp4" },
+  { publicId: "Cimac_Audiciones_tsxzco", format: "mp4" },
+  { publicId: "Pelotas_Escenacinco_ltupjw", format: "mp4" },
+  { publicId: "Cerro_Tupahue_-_Santiago_-_Diciembre_2019_ntbjh2", format: "mp4" },
+  { publicId: "Contact_Escenacinco_o4avs7", format: "mp4" },
+  { publicId: "Magia_con_Cartas_Escenacinco_pzfzwg", format: "mp4" },
+  { publicId: "Acroyoga_Fest_fte3cs", format: "mp4" },
+  { publicId: "Actividad_Circense_zmcnqp", format: "mp4" },
+  { publicId: "Sombreros_Escenacinco_alfiak", format: "mp4" },
+  { publicId: "Cuadro_Fijo_Escenacinco_lotojt", format: "mp4" },
+  { publicId: "Valparaíso_en_imágenes_qmdbyx", format: "mp4" },
+  { publicId: "Tela_Aérea_Escenacinco_ol9zwq", format: "mp4" },
+  { publicId: "Reel_Académico_2015_-_2016_cjqx7q", format: "mp4" },
+  { publicId: "De_Barón_a_Portales_kjyndk", format: "mp4" },
+  { publicId: "Cajas_Escenacinco_sow9b2", format: "mp4" },
+  { publicId: "Golos_Escenacinco_kbnz8w", format: "mp4" },
   { publicId: "el_arte_transforma_la_educaciÓn_v1_720p_itt6io", format: "mp4" },
   { publicId: "AGUSTÍN_ARIAS_-_REEL_ACADEMICO_ieqbhj", format: "mp4" },
   { publicId: "CINEMAGRAPH_BHAVANI_KALI_lvcot8", format: "mp4" },
@@ -24,7 +50,7 @@ const featuredVideo: VideoItem = { publicId: "Reel_2019_-24_f5i4bn", format: "mo
 
 function encodePublicId(publicId: string) { return publicId.split("/").map(encodeURIComponent).join("/"); }
 function getPoster(video: VideoItem, seconds = 3) { return video.poster || `${cloudinaryBase}/so_${seconds},w_1280,h_720,c_fill,q_auto/${encodePublicId(video.publicId)}.jpg`; }
-function getVideoUrl(video: VideoItem) { return `${cloudinaryBase}/f_${video.format},q_auto/${encodePublicId(video.publicId)}.${video.format}`; }
+function getVideoUrl(video: VideoItem) { return `${cloudinaryBase}/f_mp4,q_auto/${encodePublicId(video.publicId)}.mp4`; }
 function getOrigin(element: HTMLVideoElement) { const rect = element.getBoundingClientRect(); return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; }
 
 function FeaturedVideo({ video, onExpand }: { video: VideoItem; onExpand: (video: VideoItem, origin: OriginPoint) => void }) {
