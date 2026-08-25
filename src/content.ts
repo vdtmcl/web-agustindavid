@@ -26,12 +26,12 @@ export type ContentResponse = { hero: ContentItem | null; gallery: ContentItem[]
 
 const videoBase = "https://res.cloudinary.com/vdtm-cl/video/upload";
 
-export function videoUrl(publicId: string, format: string) {
-  return videoBase + "/f_" + format + ",q_auto/" + publicId.split("/").map(encodeURIComponent).join("/") + "." + format;
+export function videoUrl(publicId: string, maxHeight = 480) {
+  return videoBase + "/c_limit,h_" + maxHeight + "/f_auto/q_auto/" + publicId.split("/").map(encodeURIComponent).join("/");
 }
 
-export function frameUrl(publicId: string, seconds = 3) {
-  return videoBase + "/so_" + seconds + ",w_1280,h_720,c_fill,q_auto/" + publicId.split("/").map(encodeURIComponent).join("/") + ".jpg";
+export function frameUrl(publicId: string, seconds = 3, maxHeight = 480) {
+  return videoBase + "/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + publicId.split("/").map(encodeURIComponent).join("/") + ".jpg";
 }
 
 export const fallbackContent: ContentResponse = {
@@ -46,10 +46,15 @@ export const fallbackContent: ContentResponse = {
     startSeconds: 0,
     endTrimSeconds: 0,
     coverUrl: null,
-    videoUrl: videoUrl("Reel_2019_-24_f5i4bn", "mov"),
+    videoUrl: videoUrl("Reel_2019_-24_f5i4bn", 720),
     photos: [],
   },
   gallery: [
+    ["arte01_bxzazk", "Arte 01"],
+    ["arte04_dltfyi", "Arte 04"],
+    ["arte05_ioopp5", "Arte 05"],
+    ["arte03_ywoxoi", "Arte 03"],
+    ["arte02_vb27bd", "Arte 02"],
     ["Lanchada_Panzer_-_125_años_Santiago_Wanderers_hy8fyo", "Lanchada Panzer - 125 años Santiago Wanderers"],
     ["Celebración_Ascenso_Santiago_Wanderers_-_Valparaíso_-_8_de_Diciembre_inlyti", "Celebración Ascenso Santiago Wanderers - Valparaíso - 8 de Diciembre"],
     ["Cueca_Arriba_mi_Wanderito_-_125_años_Santiago_Wanderers_fmurpk", "Cueca Arriba mi Wanderito - 125 años Santiago Wanderers"],
@@ -110,7 +115,7 @@ export const fallbackContent: ContentResponse = {
     startSeconds: 0,
     endTrimSeconds: 0,
     coverUrl: frameUrl(publicId),
-    videoUrl: videoUrl(publicId, "mp4"),
+    videoUrl: videoUrl(publicId),
     photos: [],
   })),
 };
