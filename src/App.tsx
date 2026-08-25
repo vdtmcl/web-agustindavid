@@ -15,6 +15,15 @@ function seekToPlaybackStart(item: ContentItem, video: HTMLVideoElement) {
   if (video.currentTime < start || video.currentTime >= end) video.currentTime = start;
 }
 
+function seekToPlaybackResume(item: ContentItem, video: HTMLVideoElement) {
+  const { start, end } = playbackBounds(item, video);
+  if (video.ended || (Number.isFinite(end) && video.currentTime >= end - 0.05)) {
+    video.currentTime = start;
+  } else {
+    seekToPlaybackStart(item, video);
+  }
+}
+
 function enforcePlaybackRange(item: ContentItem, video: HTMLVideoElement) {
   const { start, end } = playbackBounds(item, video);
   if (video.currentTime < start) {
@@ -77,7 +86,7 @@ function FeaturedVideo({ item }: { item: ContentItem }) {
     const video = ref.current;
     if (!video) return;
     if (video.paused) {
-      seekToPlaybackStart(item, video);
+      seekToPlaybackResume(item, video);
       void video.play().catch(() => undefined);
     } else {
       video.pause();
@@ -89,6 +98,7 @@ function FeaturedVideo({ item }: { item: ContentItem }) {
 
 function VideoCard({ item }: { item: ContentItem }) {
   const [playing, setPlaying] = useState(item.autoplay);
+  const [showPoster, setShowPoster] = useState(!item.autoplay);
   const ref = useRef<HTMLVideoElement>(null);
   useVisibleAutoplay(ref, item.autoplay, item);
 
@@ -96,6 +106,7 @@ function VideoCard({ item }: { item: ContentItem }) {
     const video = ref.current;
     if (!video) return;
     seekToPlaybackStart(item, video);
+    setShowPoster(false);
     void video.play().catch(() => setPlaying(false));
   };
 
@@ -103,14 +114,15 @@ function VideoCard({ item }: { item: ContentItem }) {
     const video = ref.current;
     if (!video) return;
     if (video.paused) {
-      seekToPlaybackStart(item, video);
+      setShowPoster(false);
+      seekToPlaybackResume(item, video);
       void video.play().catch(() => setPlaying(false));
     } else {
       video.pause();
     }
   };
 
-  return <article className={"video-card " + (item.variant === "video-large" ? "video-card-large" : "")}><div className="video-frame"><video ref={ref} autoPlay={item.autoplay} muted playsInline preload="metadata" poster={item.coverUrl || undefined} src={item.videoUrl || undefined} onLoadedMetadata={(event) => { seekToPlaybackStart(item, event.currentTarget); if (item.autoplay) void event.currentTarget.play().catch(() => setPlaying(false)); }} onTimeUpdate={(event) => enforcePlaybackRange(item, event.currentTarget)} onEnded={() => setPlaying(false)} onClick={toggle} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} aria-label={item.displayName + " sin sonido"} />{!playing && !item.autoplay && <button className="video-poster" type="button" onClick={start} aria-label={"Reproducir " + item.displayName}><img src={item.coverUrl || ""} alt="Portada del video" loading="lazy" /></button>}</div></article>;
+  return <article className={"video-card " + (item.variant === "video-large" ? "video-card-large" : "")}><div className="video-frame"><video ref={ref} autoPlay={item.autoplay} muted playsInline preload="metadata" poster={item.coverUrl || undefined} src={item.videoUrl || undefined} onLoadedMetadata={(event) => { seekToPlaybackStart(item, event.currentTarget); if (item.autoplay) void event.currentTarget.play().catch(() => setPlaying(false)); }} onTimeUpdate={(event) => { const video = event.currentTarget; enforcePlaybackRange(item, video); const { end } = playbackBounds(item, video); if (Number.isFinite(end) && video.currentTime >= end - 0.05) { setPlaying(false); setShowPoster(false); } }} onEnded={(event) => { event.currentTarget.pause(); setPlaying(false); setShowPoster(false); }} onClick={toggle} onPlay={() => { setPlaying(true); setShowPoster(false); }} onPause={() => setPlaying(false)} aria-label={item.displayName + " sin sonido"} />{showPoster && !item.autoplay && <button className="video-poster" type="button" onClick={start} aria-label={"Reproducir " + item.displayName}><img src={item.coverUrl || ""} alt="Portada del video" loading="lazy" /></button>}</div></article>;
 }
 
 function PhotoCard({ item, onExpand }: { item: ContentItem; onExpand: (item: ContentItem) => void }) {
