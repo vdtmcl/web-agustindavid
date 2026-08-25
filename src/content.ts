@@ -15,6 +15,8 @@ export type ContentItem = {
   position: number;
   displayName: string;
   autoplay: boolean;
+  startSeconds: number;
+  endTrimSeconds: number;
   coverUrl: string | null;
   videoUrl: string | null;
   photos: PhotoItem[];
@@ -41,6 +43,8 @@ export const fallbackContent: ContentResponse = {
     position: 0,
     displayName: "Reel Artístico 2019 Agustín David",
     autoplay: true,
+    startSeconds: 0,
+    endTrimSeconds: 0,
     coverUrl: null,
     videoUrl: videoUrl("Reel_2019_-24_f5i4bn", "mov"),
     photos: [],
@@ -103,6 +107,8 @@ export const fallbackContent: ContentResponse = {
     position: index,
     displayName,
     autoplay: false,
+    startSeconds: 0,
+    endTrimSeconds: 0,
     coverUrl: frameUrl(publicId),
     videoUrl: videoUrl(publicId, "mp4"),
     photos: [],
