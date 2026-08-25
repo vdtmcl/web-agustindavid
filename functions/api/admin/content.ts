@@ -1,11 +1,11 @@
 import { requireAuth } from "../../_lib/auth";
-import { loadAdminContent } from "../../_lib/content";
+import { loadAdminContent, syncVideoCatalog } from "../../_lib/content";
 import { badRequest, json, serverError } from "../../_lib/response";
 
 export const onRequestGet = async ({ request, env }: any) => {
   const denied = await requireAuth(request, env);
   if (denied) return denied;
-  try { return json({ items: await loadAdminContent(env) }); } catch { return serverError("No fue posible cargar el panel."); }
+  try { await syncVideoCatalog(env); return json({ items: await loadAdminContent(env) }); } catch { return serverError("No fue posible cargar el panel."); }
 };
 
 export const onRequestPost = async ({ request, env }: any) => {
