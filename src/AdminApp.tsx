@@ -77,20 +77,35 @@ function CoverInput({ item, onUploaded }: { item: ContentItem; onUploaded: () =>
 
 function VideoPreview({ item }: { item: ContentItem }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const previous = useRef<{ start: number; endTrim: number } | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
   const [message, setMessage] = useState("");
 
+  const values = () => ({
+    start: Math.max(0, Number(item.startSeconds) || 0),
+    endTrim: Math.max(0, Number(item.endTrimSeconds) || 0),
+  });
+
+  const mute = (video: HTMLVideoElement) => {
+    if (!video.muted) video.muted = true;
+    if (video.volume !== 0) video.volume = 0;
+  };
+
   const bounds = (video: HTMLVideoElement) => {
-    const start = Math.max(0, Number(item.startSeconds) || 0);
-    const trimFromEnd = Math.max(0, Number(item.endTrimSeconds) || 0);
-    return { start, end: Math.max(start, video.duration - trimFromEnd) };
+    const { start: requestedStart, endTrim } = values();
+    const lastSafeTime = Math.max(0, video.duration - 0.05);
+    const start = Math.min(requestedStart, lastSafeTime);
+    const end = Math.max(start, video.duration - endTrim);
+    return { start, end };
   };
 
   const enforce = (video: HTMLVideoElement) => {
+    mute(video);
     if (!Number.isFinite(video.duration)) return;
     const { start, end } = bounds(video);
     if (start >= end) {
       video.pause();
+      video.currentTime = start;
       setMessage("El rango seleccionado no deja tiempo reproducible.");
       return;
     }
@@ -98,26 +113,57 @@ function VideoPreview({ item }: { item: ContentItem }) {
     if (video.currentTime < start) video.currentTime = start;
     if (video.currentTime >= end) {
       video.pause();
-      video.currentTime = start;
+      video.currentTime = Math.max(start, end - 0.05);
     }
   };
+
+  useEffect(() => {
+    const next = values();
+    const old = previous.current;
+    previous.current = next;
+    const video = ref.current;
+    if (!video || !old || !Number.isFinite(video.duration)) return;
+
+    const { start, end } = bounds(video);
+    video.pause();
+    mute(video);
+    if (next.start !== old.start) {
+      video.currentTime = start;
+    } else if (next.endTrim !== old.endTrim) {
+      video.currentTime = Math.max(start, end - 0.05);
+    }
+    setMessage(start >= end ? "El rango seleccionado no deja tiempo reproducible." : "");
+  }, [item.startSeconds, item.endTrimSeconds]);
 
   return (
     <div className="admin-video-preview">
       <video
         ref={ref}
         controls
-        preload="none"
+        muted
+        defaultMuted
+        preload="metadata"
         poster={item.coverUrl || undefined}
         src={item.videoUrl || undefined}
         onDragStart={(event) => event.stopPropagation()}
         onLoadedMetadata={(event) => {
-          setDuration(event.currentTarget.duration);
-          enforce(event.currentTarget);
+          const video = event.currentTarget;
+          mute(video);
+          setDuration(video.duration);
+          enforce(video);
         }}
-        onPlay={(event) => enforce(event.currentTarget)}
+        onPlay={(event) => {
+          const video = event.currentTarget;
+          mute(video);
+          if (Number.isFinite(video.duration)) {
+            const { start, end } = bounds(video);
+            if (video.currentTime >= end - 0.05) video.currentTime = start;
+          }
+          enforce(video);
+        }}
         onSeeking={(event) => enforce(event.currentTarget)}
         onTimeUpdate={(event) => enforce(event.currentTarget)}
+        onVolumeChange={(event) => mute(event.currentTarget)}
         aria-label={"Previsualizar " + item.displayName}
       />
       {duration !== null && <small>{message || "Duración: " + duration.toFixed(1) + " s"}</small>}
@@ -134,6 +180,17 @@ function VideoTrimControls({ item, onChange }: { item: ContentItem; onChange: (c
     setEndTrim(String(item.endTrimSeconds ?? 0));
   }, [item.startSeconds, item.endTrimSeconds]);
 
+  const applyDraft = (field: "startSeconds" | "endTrimSeconds", rawValue: string) => {
+    if (field === "startSeconds") setStart(rawValue);
+    else setEndTrim(rawValue);
+
+    if (rawValue.trim() === "") return;
+    const value = Number(rawValue);
+    if (!Number.isFinite(value) || value < 0) return;
+    const currentValue = field === "startSeconds" ? Number(item.startSeconds ?? 0) : Number(item.endTrimSeconds ?? 0);
+    if (value !== currentValue) onChange(field === "startSeconds" ? { startSeconds: value } : { endTrimSeconds: value });
+  };
+
   const commit = (field: "startSeconds" | "endTrimSeconds", rawValue: string) => {
     const value = rawValue.trim() === "" ? 0 : Number(rawValue);
     if (!Number.isFinite(value) || value < 0) {
@@ -142,7 +199,8 @@ function VideoTrimControls({ item, onChange }: { item: ContentItem; onChange: (c
       else setEndTrim(String(item.endTrimSeconds ?? 0));
       return;
     }
-    onChange(field === "startSeconds" ? { startSeconds: value } : { endTrimSeconds: value });
+    const currentValue = field === "startSeconds" ? Number(item.startSeconds ?? 0) : Number(item.endTrimSeconds ?? 0);
+    if (value !== currentValue) onChange(field === "startSeconds" ? { startSeconds: value } : { endTrimSeconds: value });
   };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -151,8 +209,8 @@ function VideoTrimControls({ item, onChange }: { item: ContentItem; onChange: (c
 
   return (
     <div className="admin-trim-controls">
-      <label>Inicio (s)<input type="number" min="0" step="0.1" value={start} onChange={(event) => setStart(event.target.value)} onBlur={(event) => commit("startSeconds", event.target.value)} onKeyDown={onKeyDown} /></label>
-      <label>Final (s antes)<input type="number" min="0" step="0.1" value={endTrim} onChange={(event) => setEndTrim(event.target.value)} onBlur={(event) => commit("endTrimSeconds", event.target.value)} onKeyDown={onKeyDown} /></label>
+      <label>Inicio (s)<input type="number" min="0" step="0.1" value={start} onChange={(event) => applyDraft("startSeconds", event.target.value)} onBlur={(event) => commit("startSeconds", event.target.value)} onKeyDown={onKeyDown} /></label>
+      <label>Final (s antes)<input type="number" min="0" step="0.1" value={endTrim} onChange={(event) => applyDraft("endTrimSeconds", event.target.value)} onBlur={(event) => commit("endTrimSeconds", event.target.value)} onKeyDown={onKeyDown} /></label>
     </div>
   );
 }
