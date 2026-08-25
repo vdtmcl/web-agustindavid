@@ -307,3 +307,13 @@ h2 { margin: 0; color: #f2f0ed; font-size: clamp(2rem, 3.8vw, 3.35rem); font-wei
   .admin-trim-title { grid-column: 1 / -1; }
   .admin-time-control small { white-space: normal; }
 }
+
+@media (max-width: 560px) {
+  .featured { grid-template-columns: 1fr; gap: 0; width: 100%; margin: 0; }
+  .featured .video-frame, .featured-copy { border: 0; }
+  .featured-copy { width: 100%; }
+  .video-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; width: 100%; margin: 0; }
+  .video-gallery .video-card { width: 100%; }
+  .video-gallery .video-card-large { grid-column: span 2; grid-row: auto; }
+  .video-gallery .video-frame { border: 0; }
+}

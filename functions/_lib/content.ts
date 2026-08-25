@@ -61,6 +61,7 @@ export async function loadContent(env: any, admin = false) {
       coverPublicId: admin ? row.cover_public_id : undefined,
       coverUrl: row.cover_mode === "image" && row.cover_public_id ? imageUrl(row.cover_public_id, admin ? 480 : 1280, admin ? 270 : 720, "fill") : row.public_id ? frameUrl(row.public_id, row.poster_seconds, maxHeight) : albumPhotos[0]?.thumbUrl || null,
       videoUrl: row.public_id && row.format ? videoUrl(row.public_id, row.format, maxHeight) : null,
+      mobileVideoUrl: row.public_id && row.format ? videoUrl(row.public_id, row.format, row.placement === "hero" || row.variant === "video-large" ? 360 : 240) : null,
       photos: albumPhotos,
     };
   });

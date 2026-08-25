@@ -19,6 +19,7 @@ export type ContentItem = {
   endTrimSeconds: number;
   coverUrl: string | null;
   videoUrl: string | null;
+  mobileVideoUrl: string | null;
   photos: PhotoItem[];
 };
 
@@ -47,6 +48,7 @@ export const fallbackContent: ContentResponse = {
     endTrimSeconds: 0,
     coverUrl: null,
     videoUrl: videoUrl("Reel_2019_-24_f5i4bn", 480),
+    mobileVideoUrl: videoUrl("Reel_2019_-24_f5i4bn", 360),
     photos: [],
   },
   gallery: [
@@ -116,6 +118,7 @@ export const fallbackContent: ContentResponse = {
     endTrimSeconds: 0,
     coverUrl: frameUrl(publicId),
     videoUrl: videoUrl(publicId),
+    mobileVideoUrl: videoUrl(publicId, 240),
     photos: [],
   })),
 };
