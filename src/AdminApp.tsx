@@ -532,9 +532,11 @@ function AdminApp() {
     setItems(previous);
     setStatus("saving");
     try {
+      const previousHero = previous.find((item) => item.placement === "hero");
+      const previousGallery = previous.filter((item) => item.placement === "gallery").sort((a, b) => a.position - b.position);
       await requestJson("/api/admin/content/order", {
         method: "PUT",
-        body: JSON.stringify({ ids: previous.filter((item) => item.placement === "gallery").sort((a, b) => a.position - b.position).map((item) => item.id) }),
+        body: JSON.stringify({ heroId: previousHero?.id ?? null, ids: previousGallery.map((item) => item.id) }),
       });
       setStatus("saved");
     } catch {
@@ -571,6 +573,7 @@ function AdminApp() {
       onDragLeave={() => setDragOverId(null)}
       onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }}
       onDrop={(event) => handleDrop(event, item)}
+    >
       <div className="admin-row-main">
         <span className="admin-drag" aria-hidden="true">☰</span>
         {item.type === "video" ? <VideoPreview item={item} /> : <img src={item.coverUrl || item.photos[0]?.thumbUrl || ""} alt="" />}
