@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ContentItem, PhotoItem } from "./content";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -71,6 +71,89 @@ function CoverInput({ item, onUploaded }: { item: ContentItem; onUploaded: () =>
       {busy ? "Subiendo…" : "Cambiar portada"}
       <input type="file" accept="image/jpeg,image/png,image/webp" onChange={change} disabled={busy} />
     </label>
+  );
+}
+
+
+function VideoPreview({ item }: { item: ContentItem }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [duration, setDuration] = useState<number | null>(null);
+  const [message, setMessage] = useState("");
+
+  const bounds = (video: HTMLVideoElement) => {
+    const start = Math.max(0, Number(item.startSeconds) || 0);
+    const trimFromEnd = Math.max(0, Number(item.endTrimSeconds) || 0);
+    return { start, end: Math.max(start, video.duration - trimFromEnd) };
+  };
+
+  const enforce = (video: HTMLVideoElement) => {
+    if (!Number.isFinite(video.duration)) return;
+    const { start, end } = bounds(video);
+    if (start >= end) {
+      video.pause();
+      setMessage("El rango seleccionado no deja tiempo reproducible.");
+      return;
+    }
+    setMessage("");
+    if (video.currentTime < start) video.currentTime = start;
+    if (video.currentTime >= end) {
+      video.pause();
+      video.currentTime = start;
+    }
+  };
+
+  return (
+    <div className="admin-video-preview">
+      <video
+        ref={ref}
+        controls
+        preload="none"
+        poster={item.coverUrl || undefined}
+        src={item.videoUrl || undefined}
+        onDragStart={(event) => event.stopPropagation()}
+        onLoadedMetadata={(event) => {
+          setDuration(event.currentTarget.duration);
+          enforce(event.currentTarget);
+        }}
+        onPlay={(event) => enforce(event.currentTarget)}
+        onSeeking={(event) => enforce(event.currentTarget)}
+        onTimeUpdate={(event) => enforce(event.currentTarget)}
+        aria-label={"Previsualizar " + item.displayName}
+      />
+      {duration !== null && <small>{message || "Duración: " + duration.toFixed(1) + " s"}</small>}
+    </div>
+  );
+}
+
+function VideoTrimControls({ item, onChange }: { item: ContentItem; onChange: (change: Partial<Pick<ContentItem, "startSeconds" | "endTrimSeconds">>) => void }) {
+  const [start, setStart] = useState(String(item.startSeconds ?? 0));
+  const [endTrim, setEndTrim] = useState(String(item.endTrimSeconds ?? 0));
+
+  useEffect(() => {
+    setStart(String(item.startSeconds ?? 0));
+    setEndTrim(String(item.endTrimSeconds ?? 0));
+  }, [item.startSeconds, item.endTrimSeconds]);
+
+  const commit = (field: "startSeconds" | "endTrimSeconds", rawValue: string) => {
+    const value = rawValue.trim() === "" ? 0 : Number(rawValue);
+    if (!Number.isFinite(value) || value < 0) {
+      window.alert("Ingresa un número igual o mayor que cero.");
+      if (field === "startSeconds") setStart(String(item.startSeconds ?? 0));
+      else setEndTrim(String(item.endTrimSeconds ?? 0));
+      return;
+    }
+    onChange(field === "startSeconds" ? { startSeconds: value } : { endTrimSeconds: value });
+  };
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") event.currentTarget.blur();
+  };
+
+  return (
+    <div className="admin-trim-controls">
+      <label>Inicio (s)<input type="number" min="0" step="0.1" value={start} onChange={(event) => setStart(event.target.value)} onBlur={(event) => commit("startSeconds", event.target.value)} onKeyDown={onKeyDown} /></label>
+      <label>Final (s antes)<input type="number" min="0" step="0.1" value={endTrim} onChange={(event) => setEndTrim(event.target.value)} onBlur={(event) => commit("endTrimSeconds", event.target.value)} onKeyDown={onKeyDown} /></label>
+    </div>
   );
 }
 
@@ -220,7 +303,7 @@ function AdminApp() {
     void saveOrder(next);
   };
 
-  const updateItem = async (item: ContentItem, change: Partial<Pick<ContentItem, "variant" | "autoplay" | "displayName">>) => {
+  const updateItem = async (item: ContentItem, change: Partial<Pick<ContentItem, "variant" | "autoplay" | "displayName" | "startSeconds" | "endTrimSeconds">>) => {
     setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, ...change } : entry));
     setStatus("saving");
     setError("");
@@ -287,7 +370,7 @@ function AdminApp() {
     >
       <div className="admin-row-main">
         <span className="admin-drag" aria-hidden="true">☰</span>
-        <img src={item.coverUrl || item.photos[0]?.thumbUrl || ""} alt="" />
+        {item.type === "video" ? <VideoPreview item={item} /> : <img src={item.coverUrl || item.photos[0]?.thumbUrl || ""} alt="" />}
         <div>
           <strong>{item.displayName}</strong>
           <small>{item.variant === "video-large" ? "Video Large · 16:9 · 2 columnas" : item.variant === "album-4" ? "Álbum Small · 4 fotos" : item.variant === "album-9" ? "Álbum Large · 9 fotos" : item.variant === "hero" ? "Video Hero · 16:9" : "Video Small · 16:9"}</small>
@@ -306,6 +389,7 @@ function AdminApp() {
         {item.type === "video" && (item.variant === "hero" || item.variant === "video-large") && (
           <label className="admin-toggle"><input type="checkbox" checked={item.autoplay} onChange={(event) => void updateItem(item, { autoplay: event.target.checked })} /> Autoplay</label>
         )}
+        {item.type === "video" && <VideoTrimControls item={item} onChange={(change) => void updateItem(item, change)} />}
         {item.placement === "gallery" && (
           <>
             <button type="button" onClick={() => move(index || 0, -1)} aria-label="Mover arriba">↑</button>

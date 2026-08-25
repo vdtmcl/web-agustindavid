@@ -55,6 +55,8 @@ export async function loadContent(env: any, admin = false) {
       publicId: admin ? row.public_id : undefined,
       format: admin ? row.format : undefined,
       autoplay: Boolean(row.autoplay),
+      startSeconds: Number(row.start_seconds) || 0,
+      endTrimSeconds: Number(row.end_trim_seconds) || 0,
       coverMode: admin ? row.cover_mode : undefined,
       coverPublicId: admin ? row.cover_public_id : undefined,
       coverUrl: row.cover_mode === "image" && row.cover_public_id ? imageUrl(row.cover_public_id, admin ? 480 : 1280, admin ? 270 : 720, "fill") : row.public_id ? frameUrl(row.public_id, row.poster_seconds, maxHeight) : albumPhotos[0]?.thumbUrl || null,

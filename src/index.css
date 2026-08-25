@@ -143,3 +143,12 @@ h2 { margin: 0; color: #f2f0ed; font-size: clamp(2rem, 3.8vw, 3.35rem); font-wei
 .admin-photo-actions { position: absolute; right: -2px; bottom: -1px; display: flex; gap: 1px; }
 .admin-photo-actions button { width: 14px; height: 12px; padding: 0; border: 0; color: #f2f0ed; background: rgba(5,5,5,.85); cursor: pointer; font-size: 9px; line-height: 10px; }
 .admin-photo-actions button:disabled { color: #555; cursor: default; }
+
+.admin-video-preview { width: 190px; flex: 0 0 190px; }
+.admin-video-preview video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #111; }
+.admin-video-preview small { display: block; margin-top: 4px; color: #777573; font-size: 10px; line-height: 1.25; }
+.admin-trim-controls { display: flex; align-items: end; gap: 7px; }
+.admin-trim-controls label { display: grid; gap: 4px; color: #aaa8a6; font-size: 10px; }
+.admin-trim-controls input { width: 82px; padding: 6px 7px; border: 1px solid #444; color: #f2f0ed; background: #111; font: inherit; }
+@media (max-width: 800px) { .admin-video-preview { width: min(100%, 280px); flex-basis: 280px; } .admin-trim-controls { justify-content: start; } }
+@media (max-width: 560px) { .admin-video-preview { width: min(100%, 320px); flex-basis: 320px; } .admin-trim-controls { flex-wrap: wrap; } }
