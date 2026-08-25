@@ -18,7 +18,7 @@ export async function syncVideoCatalog(env: any) {
   const known = new Set(rows.map((row: any) => row.public_id).filter(Boolean));
   const galleryPositions = rows.filter((row: any) => row.placement === "gallery").map((row: any) => Number(row.position) || 0);
   let nextPosition = galleryPositions.length ? Math.max(...galleryPositions) + 1 : 0;
-  const statements: D1PreparedStatement[] = [];
+  const statements: any[] = [];
 
   if (!known.has(catalogHero.publicId)) {
     statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'hero', 'hero', 0, ?2, ?3, ?4, 1, 1)").bind("hero-" + crypto.randomUUID(), catalogHero.publicId, catalogHero.format, catalogDisplayName(catalogHero.publicId)));
