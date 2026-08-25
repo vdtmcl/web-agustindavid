@@ -2,12 +2,12 @@ function path(publicId: string) {
   return publicId.split("/").map(encodeURIComponent).join("/");
 }
 
-export function videoUrl(publicId: string, format: string) {
-  return "https://res.cloudinary.com/vdtm-cl/video/upload/f_" + format + ",q_auto/" + path(publicId) + "." + format;
+export function videoUrl(publicId: string, _format: string, maxHeight = 480) {
+  return "https://res.cloudinary.com/vdtm-cl/video/upload/c_limit,h_" + maxHeight + "/f_auto/q_auto/" + path(publicId);
 }
 
-export function frameUrl(publicId: string, seconds = 3) {
-  return "https://res.cloudinary.com/vdtm-cl/video/upload/so_" + seconds + ",w_1280,h_720,c_fill,q_auto/" + path(publicId) + ".jpg";
+export function frameUrl(publicId: string, seconds = 3, maxHeight = 480) {
+  return "https://res.cloudinary.com/vdtm-cl/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + path(publicId) + ".jpg";
 }
 
 export function imageUrl(publicId: string, width = 1920, height = 1080, crop = "limit") {

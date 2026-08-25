@@ -35,11 +35,22 @@ function FeaturedVideo({ item, onExpand }: { item: ContentItem; onExpand: (item:
 }
 
 function VideoCard({ item, onExpand }: { item: ContentItem; onExpand: (item: ContentItem, origin: Origin) => void }) {
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(item.autoplay);
   const ref = useRef<HTMLVideoElement>(null);
   useVisibleAutoplay(ref, item.autoplay);
   const large = item.variant === "video-large";
-  return <article className={"video-card " + (large ? "video-card-large" : "")}><div className="video-frame">{playing || item.autoplay ? <><video ref={ref} autoPlay={item.autoplay} loop muted playsInline preload={item.autoplay ? "metadata" : "none"} poster={item.coverUrl || undefined} src={item.videoUrl || undefined} onClick={() => { const video = ref.current; if (!video) return; if (video.paused) void video.play(); else video.pause(); }} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} aria-label={item.displayName + " sin sonido"} /><button className="expand-button" type="button" onClick={() => { if (ref.current) { const point = originOf(ref.current); ref.current.pause(); setPlaying(false); onExpand(item, point); } }} aria-label="Expandir video">⤢</button></> : <button className="video-poster" type="button" onClick={() => setPlaying(true)} aria-label={"Reproducir " + item.displayName}><img src={item.coverUrl || ""} alt="Portada del video" loading="lazy" /></button>}</div></article>;
+  const start = () => {
+    const video = ref.current;
+    if (!video) return;
+    void video.play().catch(() => setPlaying(false));
+  };
+  const toggle = () => {
+    const video = ref.current;
+    if (!video) return;
+    if (video.paused) void video.play().catch(() => setPlaying(false));
+    else video.pause();
+  };
+  return <article className={"video-card " + (large ? "video-card-large" : "")}><div className="video-frame"><video ref={ref} autoPlay={item.autoplay} loop muted playsInline preload="metadata" poster={item.coverUrl || undefined} src={item.videoUrl || undefined} onClick={toggle} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} aria-label={item.displayName + " sin sonido"} />{!playing && !item.autoplay && <button className="video-poster" type="button" onClick={start} aria-label={"Reproducir " + item.displayName}><img src={item.coverUrl || ""} alt="Portada del video" loading="lazy" /></button>}{large && <button className="expand-button" type="button" onClick={() => { if (ref.current) { const point = originOf(ref.current); ref.current.pause(); setPlaying(false); onExpand(item, point); } }} aria-label="Expandir video">⤢</button>}</div></article>;
 }
 
 function PhotoCard({ item, onExpand }: { item: ContentItem; onExpand: (item: ContentItem) => void }) {
