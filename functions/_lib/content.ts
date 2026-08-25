@@ -1,4 +1,5 @@
 import { frameUrl, imageThumbUrl, imageUrl, videoUrl } from "./cloudinary";
+import { catalogDisplayName, catalogGallery, catalogHero } from "./catalog";
 
 function photo(row: any, full: boolean) {
   return {
@@ -9,6 +10,27 @@ function photo(row: any, full: boolean) {
     thumbUrl: imageThumbUrl(row.public_id),
     imageUrl: full ? imageUrl(row.public_id) : undefined,
   };
+}
+
+export async function syncVideoCatalog(env: any) {
+  const current = await env.DB.prepare("SELECT public_id, placement, position FROM content_items WHERE type = 'video'").all();
+  const rows = current.results || [];
+  const known = new Set(rows.map((row: any) => row.public_id).filter(Boolean));
+  const galleryPositions = rows.filter((row: any) => row.placement === "gallery").map((row: any) => Number(row.position) || 0);
+  let nextPosition = galleryPositions.length ? Math.max(...galleryPositions) + 1 : 0;
+  const statements: D1PreparedStatement[] = [];
+
+  if (!known.has(catalogHero.publicId)) {
+    statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'hero', 'hero', 0, ?2, ?3, ?4, 1, 1)").bind("hero-" + crypto.randomUUID(), catalogHero.publicId, catalogHero.format, catalogDisplayName(catalogHero.publicId)));
+  }
+
+  for (const video of catalogGallery) {
+    if (known.has(video.publicId)) continue;
+    statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'small', 'gallery', ?2, ?3, ?4, ?5, 0, 1)").bind("video-" + crypto.randomUUID(), nextPosition, video.publicId, video.format, catalogDisplayName(video.publicId)));
+    nextPosition += 1;
+  }
+
+  if (statements.length) await env.DB.batch(statements);
 }
 
 export async function loadContent(env: any, admin = false) {
