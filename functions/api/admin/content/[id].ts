@@ -38,3 +38,14 @@ export const onRequestPatch = async ({ request, env, params }: any) => {
     return json({ ok: true });
   } catch { return serverError("No fue posible guardar el contenido."); }
 };
+
+export const onRequestDelete = async ({ request, env, params }: any) => {
+  const denied = await requireAuth(request, env);
+  if (denied) return denied;
+  const current = await env.DB.prepare("SELECT id, type FROM content_items WHERE id = ?1 AND active = 1").bind(params.id).first();
+  if (!current || current.type !== "video") return json({ error: "Video no encontrado." }, { status: 404 });
+  try {
+    await env.DB.prepare("UPDATE content_items SET active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?1").bind(params.id).run();
+    return json({ ok: true });
+  } catch { return serverError("No fue posible eliminar el video."); }
+};
