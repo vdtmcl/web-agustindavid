@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ContentItem, PhotoItem } from "./content";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -145,7 +145,7 @@ function VideoTrimControls({ item, onChange }: { item: ContentItem; onChange: (c
     onChange(field === "startSeconds" ? { startSeconds: value } : { endTrimSeconds: value });
   };
 
-  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") event.currentTarget.blur();
   };
 
