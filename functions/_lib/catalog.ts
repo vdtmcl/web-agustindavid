@@ -4,6 +4,26 @@ export const catalogHero: CatalogVideo = {"publicId":"Reel_2019_-24_f5i4bn","for
 
 export const catalogGallery: CatalogVideo[] = [
   {
+    "publicId": "arte01_bxzazk",
+    "format": "mp4"
+  },
+  {
+    "publicId": "arte04_dltfyi",
+    "format": "mp4"
+  },
+  {
+    "publicId": "arte05_ioopp5",
+    "format": "mp4"
+  },
+  {
+    "publicId": "arte03_ywoxoi",
+    "format": "mp4"
+  },
+  {
+    "publicId": "arte02_vb27bd",
+    "format": "mp4"
+  },
+  {
     "publicId": "Lanchada_Panzer_-_125_años_Santiago_Wanderers_hy8fyo",
     "format": "mp4"
   },
