@@ -71,6 +71,10 @@ function useVisibleAutoplay(ref: RefObject<HTMLVideoElement | null>, enabled: bo
   }, [ref, enabled, item.startSeconds, item.endTrimSeconds]);
 }
 
+function videoSourceKey(item: ContentItem) {
+  return item.id + "|" + (item.videoUrl || "") + "|" + (item.mobileVideoUrl || "");
+}
+
 function VideoSources({ item }: { item: ContentItem }) {
   return <><source media="(max-width: 560px)" src={item.mobileVideoUrl || item.videoUrl || undefined} /><source src={item.videoUrl || undefined} /></>;
 }
@@ -97,7 +101,7 @@ function FeaturedVideo({ item }: { item: ContentItem }) {
     }
   };
 
-  return <section className="featured" aria-label="Video destacado"><div className="video-frame featured-frame"><video ref={ref} autoPlay={item.autoplay} muted playsInline preload="auto" poster={item.coverUrl || undefined} onLoadedMetadata={start} onTimeUpdate={(event) => enforcePlaybackRange(item, event.currentTarget)} onClick={toggle} aria-label="Video destacado sin sonido"><VideoSources item={item} /></video></div><div className="featured-copy"><div className="featured-slide"><h1>Agustín David</h1><p>Realizador Audiovisual en Valparaíso</p></div></div></section>;
+  return <section className="featured" aria-label="Video destacado"><div className="video-frame featured-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload="auto" poster={item.coverUrl || undefined} onLoadedMetadata={start} onTimeUpdate={(event) => enforcePlaybackRange(item, event.currentTarget)} onClick={toggle} aria-label="Video destacado sin sonido"><VideoSources item={item} /></video></div><div className="featured-copy"><div className="featured-slide"><h1>Agustín David</h1><p>Realizador Audiovisual en Valparaíso</p></div></div></section>;
 }
 
 function VideoCard({ item }: { item: ContentItem }) {
@@ -126,7 +130,7 @@ function VideoCard({ item }: { item: ContentItem }) {
     }
   };
 
-  return <article className={"video-card " + (item.variant === "video-large" ? "video-card-large" : "")}><div className="video-frame"><video ref={ref} autoPlay={item.autoplay} muted playsInline preload="metadata" poster={item.coverUrl || undefined} onLoadedMetadata={(event) => { seekToPlaybackStart(item, event.currentTarget); if (item.autoplay) void event.currentTarget.play().catch(() => setPlaying(false)); }} onTimeUpdate={(event) => { const video = event.currentTarget; enforcePlaybackRange(item, video); const { end } = playbackBounds(item, video); if (Number.isFinite(end) && video.currentTime >= end - 0.05) { setPlaying(false); setShowPoster(false); } }} onEnded={(event) => { event.currentTarget.pause(); setPlaying(false); setShowPoster(false); }} onClick={toggle} onPlay={() => { setPlaying(true); setShowPoster(false); }} onPause={() => setPlaying(false)} aria-label={item.displayName + " sin sonido"}><VideoSources item={item} /></video>{showPoster && !item.autoplay && <button className="video-poster" type="button" onClick={start} aria-label={"Reproducir " + item.displayName}><img src={item.coverUrl || ""} alt="Portada del video" loading="lazy" /></button>}</div></article>;
+  return <article className={"video-card " + (item.variant === "video-large" ? "video-card-large" : "")}><div className="video-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload="metadata" poster={item.coverUrl || undefined} onLoadedMetadata={(event) => { seekToPlaybackStart(item, event.currentTarget); if (item.autoplay) void event.currentTarget.play().catch(() => setPlaying(false)); }} onTimeUpdate={(event) => { const video = event.currentTarget; enforcePlaybackRange(item, video); const { end } = playbackBounds(item, video); if (Number.isFinite(end) && video.currentTime >= end - 0.05) { setPlaying(false); setShowPoster(false); } }} onEnded={(event) => { event.currentTarget.pause(); setPlaying(false); setShowPoster(false); }} onClick={toggle} onPlay={() => { setPlaying(true); setShowPoster(false); }} onPause={() => setPlaying(false)} aria-label={item.displayName + " sin sonido"}><VideoSources item={item} /></video>{showPoster && !item.autoplay && <button className="video-poster" type="button" onClick={start} aria-label={"Reproducir " + item.displayName}><img src={item.coverUrl || ""} alt="Portada del video" loading="lazy" /></button>}</div></article>;
 }
 
 function PhotoCard({ item, onExpand }: { item: ContentItem; onExpand: (item: ContentItem) => void }) {
