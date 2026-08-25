@@ -20,6 +20,7 @@ async function requestJson(url: string, options?: RequestInit) {
 function Login({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showAddVideo, setShowAddVideo] = useState(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
@@ -72,6 +73,61 @@ function CoverInput({ item, onUploaded }: { item: ContentItem; onUploaded: () =>
       <input type="file" accept="image/jpeg,image/png,image/webp" onChange={change} disabled={busy} />
     </label>
   );
+}
+
+
+function AddVideoForm({ onAdded, onCancel }: { onAdded: () => Promise<void> | void; onCancel: () => void }) {
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!url.trim()) return;
+    setBusy(true);
+    try {
+      await requestJson("/api/admin/content", { method: "POST", body: JSON.stringify({ videoUrl: url.trim() }) });
+      setUrl("");
+      await onAdded();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "No se pudo añadir el video.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form className="admin-add-video" onSubmit={submit}>
+      <div>
+        <strong>Añadir video</strong>
+        <small>Pega el enlace de entrega de Cloudinary del video.</small>
+      </div>
+      <input type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://res.cloudinary.com/vdtm-cl/video/upload/…" aria-label="Enlace de video de Cloudinary" required disabled={busy} />
+      <button type="submit" disabled={busy}>{busy ? "Añadiendo…" : "Añadir video"}</button>
+      <button type="button" onClick={onCancel} disabled={busy}>Cancelar</button>
+    </form>
+  );
+}
+
+function DeleteVideoButton({ item, onDeleted }: { item: ContentItem; onDeleted: () => Promise<void> | void }) {
+  const [busy, setBusy] = useState(false);
+
+  const remove = async () => {
+    const warning = item.placement === "hero"
+      ? "Este es el video Hero. Si lo eliminas, la página quedará temporalmente sin video destacado. ¿Quieres continuar?"
+      : "¿Eliminar \"" + item.displayName + "\" de la página? Esta acción quitará el video de la grilla.";
+    if (!window.confirm(warning)) return;
+    setBusy(true);
+    try {
+      await requestJson("/api/admin/content/" + item.id, { method: "DELETE" });
+      await onDeleted();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "No se pudo eliminar el video.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return <button type="button" className="admin-delete-button" onClick={() => void remove()} disabled={busy}>{busy ? "Eliminando…" : "Eliminar video"}</button>;
 }
 
 
@@ -454,6 +510,7 @@ function AdminApp() {
           </>
         )}
         {item.type === "photo_album" && <PhotoEditor item={item} onReload={reload} />}
+        {item.type === "video" && <DeleteVideoButton item={item} onDeleted={async () => { setStatus("saved"); await reload(); }} />}
         <CoverInput item={item} onUploaded={reload} />
       </div>
     </article>
@@ -468,9 +525,11 @@ function AdminApp() {
           <button type="button" onClick={() => void undo()} disabled={!history.length}>Deshacer orden</button>
           <button type="button" onClick={() => void createAlbum("album-4")}>Nuevo álbum · 4 fotos</button>
           <button type="button" onClick={() => void createAlbum("album-9")}>Nuevo álbum · 9 fotos</button>
+          <button type="button" onClick={() => setShowAddVideo((value) => !value)}>{showAddVideo ? "Cerrar añadir" : "Añadir video"}</button>
           <button type="button" onClick={() => void logout()}>Salir</button>
         </div>
       </header>
+      {showAddVideo && <AddVideoForm onAdded={async () => { setShowAddVideo(false); setStatus("saved"); await reload(); }} onCancel={() => setShowAddVideo(false)} />}
       {error && <p className="admin-error">{error}</p>}
       <section className="admin-section"><h2>Hero fijo</h2>{hero && row(hero)}</section>
       <section className="admin-section"><h2>Galería ordenable</h2>{gallery.map((item, index) => row(item, index))}</section>
