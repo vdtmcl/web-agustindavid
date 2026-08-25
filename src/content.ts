@@ -46,6 +46,11 @@ export const fallbackContent: ContentResponse = {
     photos: [],
   },
   gallery: [
+    ["arte01_bxzazk", "Arte 01"],
+    ["arte04_dltfyi", "Arte 04"],
+    ["arte05_ioopp5", "Arte 05"],
+    ["arte03_ywoxoi", "Arte 03"],
+    ["arte02_vb27bd", "Arte 02"],
     ["Lanchada_Panzer_-_125_años_Santiago_Wanderers_hy8fyo", "Lanchada Panzer - 125 años Santiago Wanderers"],
     ["Celebración_Ascenso_Santiago_Wanderers_-_Valparaíso_-_8_de_Diciembre_inlyti", "Celebración Ascenso Santiago Wanderers - Valparaíso - 8 de Diciembre"],
     ["Cueca_Arriba_mi_Wanderito_-_125_años_Santiago_Wanderers_fmurpk", "Cueca Arriba mi Wanderito - 125 años Santiago Wanderers"],
