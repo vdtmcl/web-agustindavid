@@ -2,11 +2,11 @@ function path(publicId: string) {
   return publicId.split("/").map(encodeURIComponent).join("/");
 }
 
-export function videoUrl(publicId: string, _format: string, maxHeight = 480) {
+export function videoUrl(publicId: string, _format: string, maxHeight = 360) {
   return "https://res.cloudinary.com/vdtm-cl/video/upload/c_limit,h_" + maxHeight + "/f_auto/q_auto/" + path(publicId);
 }
 
-export function frameUrl(publicId: string, seconds = 3, maxHeight = 480) {
+export function frameUrl(publicId: string, seconds = 3, maxHeight = 360) {
   return "https://res.cloudinary.com/vdtm-cl/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + path(publicId) + ".jpg";
 }
 

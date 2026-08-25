@@ -26,11 +26,11 @@ export type ContentResponse = { hero: ContentItem | null; gallery: ContentItem[]
 
 const videoBase = "https://res.cloudinary.com/vdtm-cl/video/upload";
 
-export function videoUrl(publicId: string, maxHeight = 480) {
+export function videoUrl(publicId: string, maxHeight = 360) {
   return videoBase + "/c_limit,h_" + maxHeight + "/f_auto/q_auto/" + publicId.split("/").map(encodeURIComponent).join("/");
 }
 
-export function frameUrl(publicId: string, seconds = 3, maxHeight = 480) {
+export function frameUrl(publicId: string, seconds = 3, maxHeight = 360) {
   return videoBase + "/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + publicId.split("/").map(encodeURIComponent).join("/") + ".jpg";
 }
 
@@ -46,7 +46,7 @@ export const fallbackContent: ContentResponse = {
     startSeconds: 0,
     endTrimSeconds: 0,
     coverUrl: null,
-    videoUrl: videoUrl("Reel_2019_-24_f5i4bn", 720),
+    videoUrl: videoUrl("Reel_2019_-24_f5i4bn", 480),
     photos: [],
   },
   gallery: [

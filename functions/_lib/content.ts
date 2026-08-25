@@ -44,7 +44,7 @@ export async function loadContent(env: any, admin = false) {
   }
   return (items.results || []).map((row: any) => {
     const albumPhotos = photosByItem.get(row.id) || [];
-    const maxHeight = row.type === "video" && (row.variant === "hero" || row.variant === "video-large") ? 720 : 480;
+    const maxHeight = row.type === "video" && (row.variant === "hero" || row.variant === "video-large") ? 480 : 360;
     return {
       id: row.id,
       type: row.type,
