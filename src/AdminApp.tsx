@@ -126,9 +126,12 @@ function DeleteVideoButton({ item, onDeleted }: { item: ContentItem; onDeleted: 
     }
   };
 
-  return <button type="button" className="admin-delete-button" onClick={() => void remove()} disabled={busy}>{busy ? "Eliminando…" : "Eliminar video"}</button>;
+  return (
+    <button type="button" className="admin-delete-button" onClick={() => void remove()} disabled={busy} title="Eliminar video" aria-label={"Eliminar " + item.displayName}>
+      {busy ? "…" : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-9 0 .7 13h6.6L17 7M10 11v6m4-6v6" /></svg>}
+    </button>
+  );
 }
-
 
 function VideoPreview({ item }: { item: ContentItem }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -237,7 +240,6 @@ function VideoTrimControls({ item, onChange }: { item: ContentItem; onChange: (c
   const applyDraft = (field: "startSeconds" | "endTrimSeconds", rawValue: string) => {
     if (field === "startSeconds") setStart(rawValue);
     else setEndTrim(rawValue);
-
     if (rawValue.trim() === "") return;
     const value = Number(rawValue);
     if (!Number.isFinite(value) || value < 0) return;
@@ -257,14 +259,35 @@ function VideoTrimControls({ item, onChange }: { item: ContentItem; onChange: (c
     if (value !== currentValue) onChange(field === "startSeconds" ? { startSeconds: value } : { endTrimSeconds: value });
   };
 
+  const adjust = (field: "startSeconds" | "endTrimSeconds", delta: number) => {
+    const raw = field === "startSeconds" ? start : endTrim;
+    const current = Number(raw);
+    const next = Math.max(0, Math.round(((Number.isFinite(current) ? current : 0) + delta) * 10) / 10);
+    applyDraft(field, String(next));
+  };
+
   const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") event.currentTarget.blur();
   };
 
+  const field = (label: string, value: string, name: "startSeconds" | "endTrimSeconds", description: string) => (
+    <label className="admin-time-control">
+      <span className="admin-time-label">{label}</span>
+      <span className="admin-time-field">
+        <button type="button" className="admin-time-step" onClick={() => adjust(name, -0.1)} aria-label={"Reducir " + label}>−</button>
+        <input type="number" min="0" step="0.1" inputMode="decimal" value={value} onChange={(event) => applyDraft(name, event.target.value)} onBlur={(event) => commit(name, event.target.value)} onKeyDown={onKeyDown} aria-label={label} />
+        <button type="button" className="admin-time-step" onClick={() => adjust(name, 0.1)} aria-label={"Aumentar " + label}>+</button>
+        <span className="admin-time-unit">s</span>
+      </span>
+      <small>{description}</small>
+    </label>
+  );
+
   return (
-    <div className="admin-trim-controls">
-      <label>Inicio (s)<input type="number" min="0" step="0.1" value={start} onChange={(event) => applyDraft("startSeconds", event.target.value)} onBlur={(event) => commit("startSeconds", event.target.value)} onKeyDown={onKeyDown} /></label>
-      <label>Final (s antes)<input type="number" min="0" step="0.1" value={endTrim} onChange={(event) => applyDraft("endTrimSeconds", event.target.value)} onBlur={(event) => commit("endTrimSeconds", event.target.value)} onKeyDown={onKeyDown} /></label>
+    <div className="admin-trim-controls" aria-label="Recorte del video">
+      <span className="admin-trim-title">Recorte</span>
+      {field("Inicio", start, "startSeconds", "Desde el comienzo")}
+      {field("Final antes", endTrim, "endTrimSeconds", "Se descuenta del final")}
     </div>
   );
 }
@@ -372,6 +395,7 @@ function AdminApp() {
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState("");
   const [showAddVideo, setShowAddVideo] = useState(false);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const hero = useMemo(() => items.find((item) => item.placement === "hero") || null, [items]);
   const gallery = useMemo(() => items.filter((item) => item.placement === "gallery").sort((a, b) => a.position - b.position), [items]);
 
@@ -391,15 +415,25 @@ function AdminApp() {
   if (authenticated === null) return <main className="admin-shell"><p>Cargando…</p></main>;
   if (!authenticated) return <Login onSuccess={() => setAuthenticated(true)} />;
 
-  const saveOrder = async (next: ContentItem[]) => {
+  const saveOrder = async (next: ContentItem[], nextHero: ContentItem | null = hero) => {
     const previous = items;
     setHistory((stack) => [...stack.slice(-19), previous]);
-    const heroItem = items.find((item) => item.placement === "hero");
-    setItems([...(heroItem ? [heroItem] : []), ...next.map((item, index) => ({ ...item, position: index }))]);
+    const heroItem = nextHero ? { ...nextHero, placement: "hero" as const, variant: "hero" as const } : null;
+    const galleryItems = next.map((item, index) => ({
+      ...item,
+      placement: "gallery" as const,
+      position: index,
+      variant: item.variant === "hero" ? "small" as const : item.variant,
+      autoplay: item.variant === "hero" ? false : item.autoplay,
+    }));
+    setItems([...(heroItem ? [heroItem] : []), ...galleryItems]);
     setStatus("saving");
     setError("");
     try {
-      await requestJson("/api/admin/content/order", { method: "PUT", body: JSON.stringify({ ids: next.map((item) => item.id) }) });
+      await requestJson("/api/admin/content/order", {
+        method: "PUT",
+        body: JSON.stringify({ heroId: heroItem?.id ?? null, ids: galleryItems.map((item) => item.id) }),
+      });
       setStatus("saved");
     } catch (err) {
       setItems(previous);
@@ -414,6 +448,67 @@ function AdminApp() {
     const next = [...gallery];
     [next[index], next[target]] = [next[target], next[index]];
     void saveOrder(next);
+  };
+
+  const promoteGalleryVideo = (sourceId: string) => {
+    const sourceIndex = gallery.findIndex((entry) => entry.id === sourceId);
+    const source = gallery[sourceIndex];
+    if (!source || source.type !== "video") {
+      setError("Solo los videos pueden ocupar el espacio Hero.");
+      return;
+    }
+    const next = gallery.filter((entry) => entry.id !== sourceId);
+    if (hero) next.splice(sourceIndex, 0, { ...hero, placement: "gallery", variant: "small", autoplay: false });
+    void saveOrder(next, source);
+  };
+
+  const swapHeroWith = (target: ContentItem) => {
+    if (!hero || target.type !== "video") {
+      setError("Solo puedes intercambiar el Hero con otro video.");
+      return;
+    }
+    const targetIndex = gallery.findIndex((entry) => entry.id === target.id);
+    if (targetIndex < 0) return;
+    const next = [...gallery];
+    next.splice(targetIndex, 0, { ...hero, placement: "gallery", variant: "small", autoplay: false });
+    void saveOrder(next, target);
+  };
+
+  const handleDrop = (event: DragEvent, target: ContentItem) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragOverId(null);
+    const sourceId = event.dataTransfer.getData("text/plain");
+    const source = items.find((entry) => entry.id === sourceId);
+    if (!source || source.id === target.id) return;
+
+    if (target.placement === "hero" && source.placement === "gallery") {
+      promoteGalleryVideo(source.id);
+      return;
+    }
+    if (target.placement === "gallery" && source.placement === "hero") {
+      swapHeroWith(target);
+      return;
+    }
+    if (target.placement !== "gallery" || source.placement !== "gallery") return;
+
+    const from = gallery.findIndex((entry) => entry.id === sourceId);
+    const to = gallery.findIndex((entry) => entry.id === target.id);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = [...gallery];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    void saveOrder(next);
+  };
+
+  const handleHeroDrop = (event: DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragOverId(null);
+    const sourceId = event.dataTransfer.getData("text/plain");
+    const source = items.find((entry) => entry.id === sourceId);
+    if (source?.placement === "gallery" && source.type === "video") promoteGalleryVideo(source.id);
+    else setError("Arrastra un video de la galería para ocupar el Hero.");
   };
 
   const updateItem = async (item: ContentItem, change: Partial<Pick<ContentItem, "variant" | "autoplay" | "displayName" | "startSeconds" | "endTrimSeconds">>) => {
@@ -437,9 +532,11 @@ function AdminApp() {
     setItems(previous);
     setStatus("saving");
     try {
+      const previousHero = previous.find((item) => item.placement === "hero");
+      const previousGallery = previous.filter((item) => item.placement === "gallery").sort((a, b) => a.position - b.position);
       await requestJson("/api/admin/content/order", {
         method: "PUT",
-        body: JSON.stringify({ ids: previous.filter((item) => item.placement === "gallery").sort((a, b) => a.position - b.position).map((item) => item.id) }),
+        body: JSON.stringify({ heroId: previousHero?.id ?? null, ids: previousGallery.map((item) => item.id) }),
       });
       setStatus("saved");
     } catch {
@@ -464,22 +561,18 @@ function AdminApp() {
 
   const row = (item: ContentItem, index?: number) => (
     <article
-      className="admin-row"
+      className={"admin-row " + (dragOverId === item.id ? "is-drag-over" : "")}
       key={item.id}
-      draggable={item.placement === "gallery"}
-      onDragStart={(event) => event.dataTransfer.setData("text/plain", item.id)}
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={(event) => {
-        event.preventDefault();
-        const from = gallery.findIndex((entry) => entry.id === event.dataTransfer.getData("text/plain"));
-        const to = gallery.findIndex((entry) => entry.id === item.id);
-        if (from >= 0 && to >= 0 && from !== to) {
-          const next = [...gallery];
-          const [moved] = next.splice(from, 1);
-          next.splice(to, 0, moved);
-          void saveOrder(next);
-        }
+      draggable={item.type === "video" || item.placement === "gallery"}
+      onDragStart={(event) => {
+        event.dataTransfer.setData("text/plain", item.id);
+        event.dataTransfer.effectAllowed = "move";
       }}
+      onDragEnd={() => setDragOverId(null)}
+      onDragEnter={() => setDragOverId(item.id)}
+      onDragLeave={() => setDragOverId(null)}
+      onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }}
+      onDrop={(event) => handleDrop(event, item)}
     >
       <div className="admin-row-main">
         <span className="admin-drag" aria-hidden="true">☰</span>
@@ -505,8 +598,8 @@ function AdminApp() {
         {item.type === "video" && <VideoTrimControls item={item} onChange={(change) => void updateItem(item, change)} />}
         {item.placement === "gallery" && (
           <>
-            <button type="button" onClick={() => move(index || 0, -1)} aria-label="Mover arriba">↑</button>
-            <button type="button" onClick={() => move(index || 0, 1)} aria-label="Mover abajo">↓</button>
+            <button type="button" onClick={() => move(index || 0, -1)} aria-label="Mover arriba" title="Mover arriba">↑</button>
+            <button type="button" onClick={() => move(index || 0, 1)} aria-label="Mover abajo" title="Mover abajo">↓</button>
           </>
         )}
         {item.type === "photo_album" && <PhotoEditor item={item} onReload={reload} />}
@@ -531,7 +624,10 @@ function AdminApp() {
       </header>
       {showAddVideo && <AddVideoForm onAdded={async () => { setShowAddVideo(false); setStatus("saved"); await reload(); }} onCancel={() => setShowAddVideo(false)} />}
       {error && <p className="admin-error">{error}</p>}
-      <section className="admin-section"><h2>Hero fijo</h2>{hero && row(hero)}</section>
+      <section className="admin-section">
+        <div className="admin-section-heading"><div><h2>Video Hero</h2><p>Arrastra un video aquí para intercambiarlo con el destacado actual.</p></div></div>
+        {hero ? row(hero) : <div className={"admin-empty-hero " + (dragOverId === "hero-empty" ? "is-drag-over" : "")} onDragEnter={() => setDragOverId("hero-empty")} onDragLeave={() => setDragOverId(null)} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }} onDrop={handleHeroDrop}>Arrastra un video aquí para ocupar el Hero</div>}
+      </section>
       <section className="admin-section"><h2>Galería ordenable</h2>{gallery.map((item, index) => row(item, index))}</section>
     </main>
   );
