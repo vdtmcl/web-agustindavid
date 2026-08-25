@@ -44,6 +44,7 @@ export async function loadContent(env: any, admin = false) {
   }
   return (items.results || []).map((row: any) => {
     const albumPhotos = photosByItem.get(row.id) || [];
+    const maxHeight = row.type === "video" && (row.variant === "hero" || row.variant === "video-large") ? 720 : 480;
     return {
       id: row.id,
       type: row.type,
@@ -58,8 +59,8 @@ export async function loadContent(env: any, admin = false) {
       endTrimSeconds: Number(row.end_trim_seconds) || 0,
       coverMode: admin ? row.cover_mode : undefined,
       coverPublicId: admin ? row.cover_public_id : undefined,
-      coverUrl: row.cover_mode === "image" && row.cover_public_id ? imageUrl(row.cover_public_id, admin ? 480 : 1280, admin ? 270 : 720, "fill") : row.public_id ? frameUrl(row.public_id, row.poster_seconds) : albumPhotos[0]?.thumbUrl || null,
-      videoUrl: row.public_id && row.format ? videoUrl(row.public_id, row.format) : null,
+      coverUrl: row.cover_mode === "image" && row.cover_public_id ? imageUrl(row.cover_public_id, admin ? 480 : 1280, admin ? 270 : 720, "fill") : row.public_id ? frameUrl(row.public_id, row.poster_seconds, maxHeight) : albumPhotos[0]?.thumbUrl || null,
+      videoUrl: row.public_id && row.format ? videoUrl(row.public_id, row.format, maxHeight) : null,
       photos: albumPhotos,
     };
   });
