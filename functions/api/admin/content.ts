@@ -1,5 +1,6 @@
 import { requireAuth } from "../../_lib/auth";
-import { catalogDisplayName, loadAdminContent, syncVideoCatalog } from "../../_lib/content";
+import { catalogDisplayName } from "../../_lib/catalog";
+import { loadAdminContent, syncVideoCatalog } from "../../_lib/content";
 import { badRequest, json, serverError } from "../../_lib/response";
 
 type ParsedCloudinaryVideo = { publicId: string; format: string };
