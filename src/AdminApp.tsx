@@ -141,7 +141,6 @@ function VideoPreview({ item }: { item: ContentItem }) {
         ref={ref}
         controls
         muted
-        defaultMuted
         preload="metadata"
         poster={item.coverUrl || undefined}
         src={item.videoUrl || undefined}
