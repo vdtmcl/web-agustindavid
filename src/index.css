@@ -152,3 +152,37 @@ h2 { margin: 0; color: #f2f0ed; font-size: clamp(2rem, 3.8vw, 3.35rem); font-wei
 .admin-trim-controls input { width: 82px; padding: 6px 7px; border: 1px solid #444; color: #f2f0ed; background: #111; font: inherit; }
 @media (max-width: 800px) { .admin-video-preview { width: min(100%, 280px); flex-basis: 280px; } .admin-trim-controls { justify-content: start; } }
 @media (max-width: 560px) { .admin-video-preview { width: min(100%, 320px); flex-basis: 320px; } .admin-trim-controls { flex-wrap: wrap; } }
+
+.admin-add-video {
+  display: grid;
+  grid-template-columns: minmax(190px, .65fr) minmax(280px, 1.4fr) auto auto;
+  gap: 12px;
+  align-items: end;
+  margin: 0 0 28px;
+  padding: 15px;
+  border: 1px solid #393939;
+  background: #0b0b0b;
+}
+.admin-add-video > div { display: grid; gap: 5px; }
+.admin-add-video small { color: #8d8a87; font-size: 11px; }
+.admin-add-video input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid #444;
+  color: #f2f0ed;
+  background: #111;
+  font: inherit;
+}
+.admin-add-video input:focus { border-color: #a8c5c0; outline: 1px solid #a8c5c0; }
+.admin-add-video button { white-space: nowrap; }
+.admin-delete-button { border-color: #713a36 !important; color: #ffb1aa; }
+.admin-delete-button:hover { border-color: #c7655c !important; background: rgba(126, 51, 45, .22); }
+@media (max-width: 900px) {
+  .admin-add-video { grid-template-columns: 1fr 1fr; }
+  .admin-add-video > div { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .admin-add-video { grid-template-columns: 1fr; }
+  .admin-add-video button { width: 100%; }
+}
