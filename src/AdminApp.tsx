@@ -20,7 +20,6 @@ async function requestJson(url: string, options?: RequestInit) {
 function Login({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [showAddVideo, setShowAddVideo] = useState(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
@@ -372,6 +371,7 @@ function AdminApp() {
   const [history, setHistory] = useState<ContentItem[][]>([]);
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState("");
+  const [showAddVideo, setShowAddVideo] = useState(false);
   const hero = useMemo(() => items.find((item) => item.placement === "hero") || null, [items]);
   const gallery = useMemo(() => items.filter((item) => item.placement === "gallery").sort((a, b) => a.position - b.position), [items]);
 
