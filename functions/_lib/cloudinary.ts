@@ -2,14 +2,16 @@ function path(publicId: string) {
   return publicId.split("/").map(encodeURIComponent).join("/");
 }
 
-const videoCloudName = "jtrus9f7";
+function videoCloudName(publicId: string) {
+  return publicId.startsWith("v178") ? "jtrus9f7" : "vdtm-cl";
+}
 
 export function videoUrl(publicId: string, _format: string, maxHeight = 360) {
-  return "https://res.cloudinary.com/" + videoCloudName + "/video/upload/c_limit,h_" + maxHeight + "/f_auto/q_auto/" + path(publicId);
+  return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/c_limit,h_" + maxHeight + "/f_auto/q_auto/" + path(publicId);
 }
 
 export function frameUrl(publicId: string, seconds = 3, maxHeight = 360) {
-  return "https://res.cloudinary.com/" + videoCloudName + "/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + path(publicId) + ".jpg";
+  return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + path(publicId) + ".jpg";
 }
 
 export function imageUrl(publicId: string, width = 1920, height = 1080, crop = "limit") {
