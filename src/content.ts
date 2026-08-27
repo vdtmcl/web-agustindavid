@@ -25,7 +25,7 @@ export type ContentItem = {
 
 export type ContentResponse = { hero: ContentItem | null; gallery: ContentItem[] };
 
-const videoBase = "https://res.cloudinary.com/vdtm-cl/video/upload";
+const videoBase = "https://res.cloudinary.com/jtrus9f7/video/upload";
 
 export function videoUrl(publicId: string, maxHeight = 360) {
   return videoBase + "/c_limit,h_" + maxHeight + "/f_auto/q_auto/" + publicId.split("/").map(encodeURIComponent).join("/");
@@ -35,90 +35,23 @@ export function frameUrl(publicId: string, seconds = 3, maxHeight = 360) {
   return videoBase + "/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + publicId.split("/").map(encodeURIComponent).join("/") + ".jpg";
 }
 
+const videos = [
+  ["1787833089", "clip001_1"], ["1787833077", "clip001_10"], ["1787833028", "clip001_11"],
+  ["1787833040", "clip001_12"], ["1787833041", "clip001_13"], ["1787833043", "clip001_14"],
+  ["1787833054", "clip001_15"], ["1787833047", "clip001_16"], ["1787833087", "clip001_17"],
+  ["1787833054", "clip001_18"], ["1787833056", "clip001_19"], ["1787833084", "clip001_2"],
+  ["1787833083", "clip001_20"], ["1787833084", "clip001_21"], ["1787833071", "clip001_22"],
+  ["1787833068", "clip001_23"], ["1787833072", "clip001_24"], ["1787833089", "clip001_25"],
+  ["1787833068", "clip001_26"], ["1787833067", "clip001_27"], ["1787833034", "clip001_4"],
+  ["1787833027", "clip001_3"], ["1787833097", "clip001_5"], ["1787833037", "clip001_6"],
+  ["1787833042", "clip001_7"], ["1787833095", "clip001_8"],
+].map(([version, name]) => ({ publicId: "v" + version + "/" + name, name }));
+
+function contentItem(publicId: string, displayName: string, position: number, placement: "hero" | "gallery"): ContentItem {
+  return { id: placement === "hero" ? "hero-new-cloudinary" : "video-" + position, type: "video", variant: placement === "hero" ? "hero" : "small", placement, position, displayName, autoplay: placement === "hero", startSeconds: 0, endTrimSeconds: 0, coverUrl: frameUrl(publicId, 3, placement === "hero" ? 480 : 360), videoUrl: videoUrl(publicId, placement === "hero" ? 480 : 360), mobileVideoUrl: videoUrl(publicId, placement === "hero" ? 360 : 240), photos: [] };
+}
+
 export const fallbackContent: ContentResponse = {
-  hero: {
-    id: "hero-reel-2019",
-    type: "video",
-    variant: "hero",
-    placement: "hero",
-    position: 0,
-    displayName: "Reel Artístico 2019 Agustín David",
-    autoplay: true,
-    startSeconds: 0,
-    endTrimSeconds: 0,
-    coverUrl: null,
-    videoUrl: videoUrl("Reel_2019_-24_f5i4bn", 480),
-    mobileVideoUrl: videoUrl("Reel_2019_-24_f5i4bn", 360),
-    photos: [],
-  },
-  gallery: [
-    ["arte01_bxzazk", "Arte 01"],
-    ["arte04_dltfyi", "Arte 04"],
-    ["arte05_ioopp5", "Arte 05"],
-    ["arte03_ywoxoi", "Arte 03"],
-    ["arte02_vb27bd", "Arte 02"],
-    ["Lanchada_Panzer_-_125_años_Santiago_Wanderers_hy8fyo", "Lanchada Panzer - 125 años Santiago Wanderers"],
-    ["Celebración_Ascenso_Santiago_Wanderers_-_Valparaíso_-_8_de_Diciembre_inlyti", "Celebración Ascenso Santiago Wanderers - Valparaíso - 8 de Diciembre"],
-    ["Cueca_Arriba_mi_Wanderito_-_125_años_Santiago_Wanderers_fmurpk", "Cueca Arriba mi Wanderito - 125 años Santiago Wanderers"],
-    ["Matrimonio_03_dlytpb", "Matrimonio 03"],
-    ["Matrimonio_02_uqwst0", "Matrimonio 02"],
-    ["Matrimonio_01_zzzyo0", "Matrimonio 01"],
-    ["Spot_Balmaceda_-_Final_qnwlwv", "Spot Balmaceda - Final"],
-    ["Cápsula_Instagram_-_Huerto_Orgánico_USM_h5eeom", "Cápsula Instagram - Huerto Orgánico USM"],
-    ["Nodo_Valpo_-_Presentación_para_redes_sociales_htegjx", "Nodo Valpo - Presentación para redes sociales"],
-    ["Nodo_Valpo_-_Cómo_llegar_para_redes_sociales_f1uv4g", "Nodo Valpo - Cómo llegar para redes sociales"],
-    ["Adelanto_Escenacinco_vqvbw3", "Adelanto Escenacinco"],
-    ["Payaso_Escenacinco_uywts3", "Payaso Escenacinco"],
-    ["Monociclo_Escenacinco_scfry0", "Monociclo Escenacinco"],
-    ["Manipulación_de_Balones_Escenacinco_goobog", "Manipulación de Balones Escenacinco"],
-    ["Hula_Hoop_Escenacinco_frsu2w", "Hula Hoop Escenacinco"],
-    ["Bautizo_Maximiliano_Andrés_jmhbdw", "Bautizo Maximiliano Andrés"],
-    ["Ensamble_Comunitario_-_Casa_Ckoi_bqa6jl", "Ensamble Comunitario - Casa Ckoi"],
-    ["Mercado_Puerto_de_Valparaíso_-_Reapertura_2020_e7hgjm", "Mercado Puerto de Valparaíso - Reapertura 2020"],
-    ["Comedor_Comunitario_El_Olivar_Viña_del_Mar_c6dm7g", "Comedor Comunitario El Olivar Viña del Mar"],
-    ["Trapecio_Fijo_Escenacinco_oed5sq", "Trapecio Fijo Escenacinco"],
-    ["Clavas_Escenacinco_oynfuu", "Clavas Escenacinco"],
-    ["Institucional_Sansanito_-_Punto_UTFSM_an5rhn", "Institucional Sansanito - Punto UTFSM"],
-    ["Cimac_Audiciones_tsxzco", "Cimac Audiciones"],
-    ["Pelotas_Escenacinco_ltupjw", "Pelotas Escenacinco"],
-    ["Cerro_Tupahue_-_Santiago_-_Diciembre_2019_ntbjh2", "Cerro Tupahue - Santiago - Diciembre 2019"],
-    ["Contact_Escenacinco_o4avs7", "Contact Escenacinco"],
-    ["Magia_con_Cartas_Escenacinco_pzfzwg", "Magia con Cartas Escenacinco"],
-    ["Acroyoga_Fest_fte3cs", "Acroyoga Fest"],
-    ["Actividad_Circense_zmcnqp", "Actividad Circense"],
-    ["Sombreros_Escenacinco_alfiak", "Sombreros Escenacinco"],
-    ["Cuadro_Fijo_Escenacinco_lotojt", "Cuadro Fijo Escenacinco"],
-    ["Valparaíso_en_imágenes_qmdbyx", "Valparaíso en imágenes"],
-    ["Tela_Aérea_Escenacinco_ol9zwq", "Tela Aérea Escenacinco"],
-    ["Reel_Académico_2015_-_2016_cjqx7q", "Reel Académico 2015 - 2016"],
-    ["De_Barón_a_Portales_kjyndk", "De Barón a Portales"],
-    ["Cajas_Escenacinco_sow9b2", "Cajas Escenacinco"],
-    ["Golos_Escenacinco_kbnz8w", "Golos Escenacinco"],
-    ["el_arte_transforma_la_educaciÓn_v1_720p_itt6io", "el arte transforma la educaciÓn v1 720p"],
-    ["AGUSTÍN_ARIAS_-_REEL_ACADEMICO_ieqbhj", "AGUSTÍN ARIAS - REEL ACADEMICO"],
-    ["CINEMAGRAPH_BHAVANI_KALI_lvcot8", "CINEMAGRAPH BHAVANI KALI"],
-    ["AQMfW613_q3CWaia67pBW0dmflSSNKMvDSIDvWKnybbG7hwjgFp-1sQe1uHBWfGoL8JwsO4PDqXeQCz8yXflt41__u3ovdu", "AQMfW613 q3CWaia67pBW0dmflSSNKMvDSIDvWKnybbG7hwjgFp-1sQe1uHBWfGoL8JwsO4PDqXeQCz8yXflt41"],
-    ["YEREL-compARTEVALPO_eju8bh", "YEREL · compARTEVALPO"],
-    ["ESTEBAN-ALVAREZ-compARTEVALPO_kx2zar", "Esteban Álvarez · compARTEVALPO"],
-    ["AGUSTÍN_-_compARTEVALPO_iik5ia", "Agustín · compARTEVALPO"],
-    ["TAMARA_ARANGUIZ_-_compARTEVALPO_x7g4wm", "Tamara Aranguiz · compARTEVALPO"],
-    ["JOAQUÍN_YAÑEZ_-_compARTEVALPO_n8ifyq", "Joaquín Yáñez · compARTEVALPO"],
-    ["JORGE_ROJAS_-_compARTEVALPO_cwriwl", "Jorge Rojas · compARTEVALPO"],
-    ["BHAVANI_KALI_compARTEVALPO_bkardo", "Bhavani Kali · compARTEVALPO"],
-    ["MONGOLO_-_compARTEVALPO_xcdipt", "Mongolo · compARTEVALPO"],
-  ].map(([publicId, displayName], index) => ({
-    id: "video-" + (index + 1),
-    type: "video" as const,
-    variant: "small" as const,
-    placement: "gallery" as const,
-    position: index,
-    displayName,
-    autoplay: false,
-    startSeconds: 0,
-    endTrimSeconds: 0,
-    coverUrl: frameUrl(publicId),
-    videoUrl: videoUrl(publicId),
-    mobileVideoUrl: videoUrl(publicId, 240),
-    photos: [],
-  })),
+  hero: contentItem(videos[0].publicId, videos[0].name, 0, "hero"),
+  gallery: videos.slice(1).map((video, index) => contentItem(video.publicId, video.name, index, "gallery")),
 };
