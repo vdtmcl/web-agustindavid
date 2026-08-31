@@ -1,9 +1,8 @@
-import { loadContent, syncVideoCatalog } from "../_lib/content";
+import { loadContent } from "../_lib/content";
 import { json, noStore, serverError } from "../_lib/response";
 
 export const onRequestGet = async ({ env }: any) => {
   try {
-    await syncVideoCatalog(env);
     const content = await loadContent(env);
     const complete = (item: any) => {
       if (item.type !== "photo_album") return true;
