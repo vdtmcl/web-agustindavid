@@ -7,7 +7,7 @@ function photo(row: any, full: boolean) {
 
 export async function syncVideoCatalog(env: any) {
   const statements: any[] = [env.DB.prepare("DELETE FROM content_items WHERE type = 'video'")];
-  statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'hero', 'hero', 0, ?2, ?3, ?4, 1, 1)").bind("hero-" + crypto.randomUUID(), catalogHero.publicId, catalogHero.format, catalogDisplayName(catalogHero.publicId)));
+  if (catalogHero) statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'hero', 'hero', 0, ?2, ?3, ?4, 1, 1)").bind("hero-" + crypto.randomUUID(), catalogHero.publicId, catalogHero.format, catalogDisplayName(catalogHero.publicId)));
   catalogGallery.forEach((video, index) => statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'small', 'gallery', ?2, ?3, ?4, ?5, 0, 1)").bind("video-" + crypto.randomUUID(), index, video.publicId, video.format, catalogDisplayName(video.publicId))));
   await env.DB.batch(statements);
 }
