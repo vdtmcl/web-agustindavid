@@ -36,39 +36,32 @@ function enforcePlaybackRange(item: ContentItem, video: HTMLVideoElement) {
   }
 }
 
-function useVisibleAutoplay(ref: RefObject<HTMLVideoElement | null>, enabled: boolean, item: ContentItem) {
-  const completed = useRef(false);
+function isPlaybackBuffered(item: ContentItem, video: HTMLVideoElement) {
+  const { start, end } = playbackBounds(item, video);
+  if (!Number.isFinite(end) || video.buffered.length === 0) return false;
+  for (let index = 0; index < video.buffered.length; index += 1) {
+    if (video.buffered.start(index) <= start + 0.15 && video.buffered.end(index) >= end - 0.15) return true;
+  }
+  return false;
+}
 
+function useVisibleAutoplay(ref: RefObject<HTMLVideoElement | null>, enabled: boolean, item: ContentItem, loaded = true, onLoad = () => undefined) {
   useEffect(() => {
     const video = ref.current;
-    if (!video || !enabled) return;
-
-    const markCompleted = () => {
-      completed.current = true;
-      video.pause();
-    };
-    const markTrimmedEnd = () => {
-      const { end } = playbackBounds(item, video);
-      if (Number.isFinite(end) && video.currentTime >= end - 0.05) completed.current = true;
-    };
+    if (!video) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !completed.current) {
+      if (!entry.isIntersecting) {
+        video.pause();
+      } else if (!loaded) {
+        onLoad();
+      } else if (enabled && video.paused) {
         seekToPlaybackStart(item, video);
         void video.play().catch(() => undefined);
-      } else if (!entry.isIntersecting) {
-        video.pause();
       }
-    }, { threshold: 0.45 });
-
-    video.addEventListener("ended", markCompleted);
-    video.addEventListener("timeupdate", markTrimmedEnd);
+    }, { threshold: 0.45, rootMargin: "200px 0px" });
     observer.observe(video);
-    return () => {
-      video.removeEventListener("ended", markCompleted);
-      video.removeEventListener("timeupdate", markTrimmedEnd);
-      observer.disconnect();
-    };
-  }, [ref, enabled, item.startSeconds, item.endTrimSeconds]);
+    return () => observer.disconnect();
+  }, [ref, enabled, item.startSeconds, item.endTrimSeconds, loaded, onLoad]);
 }
 
 function videoSourceKey(item: ContentItem) {
@@ -101,19 +94,32 @@ function FeaturedVideo({ item }: { item: ContentItem }) {
     }
   };
 
-  return <section className="featured" aria-label="Video destacado"><div className="video-frame featured-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload="auto" poster={item.coverUrl || undefined} onLoadedMetadata={start} onTimeUpdate={(event) => enforcePlaybackRange(item, event.currentTarget)} onClick={toggle} aria-label="Video destacado sin sonido"><VideoSources item={item} /></video></div><div className="featured-copy"><div className="featured-slide"><h1>Agustín David</h1><p>Realizador audiovisual porteño, desde el 2015, con foco en disciplinas artísticas y patrimonio regional.</p></div></div></section>;
+  return <section className="featured" aria-label="Video destacado"><div className="video-frame featured-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload="auto" poster={item.coverUrl || undefined} onLoadedMetadata={start} onTimeUpdate={(event) => enforcePlaybackRange(item, event.currentTarget)} onClick={toggle} aria-label="Video destacado sin sonido"><VideoSources item={item} /></video></div><div className="featured-copy"><div className="featured-slide"><h1>Agustín David</h1><p>Realizador audiovisual porteño, desde el 2015 con foco en disciplinas artísticas y patrimonio regional.</p></div></div></section>;
 }
 
 function VideoCard({ item }: { item: ContentItem }) {
   const [playing, setPlaying] = useState(item.autoplay);
   const [showPoster, setShowPoster] = useState(!item.autoplay);
+  const [loaded, setLoaded] = useState(!item.autoplay);
   const ref = useRef<HTMLVideoElement>(null);
-  useVisibleAutoplay(ref, item.autoplay, item);
+  useVisibleAutoplay(ref, item.autoplay, item, loaded, () => setLoaded(true));
+
+  const finishPlayback = (video: HTMLVideoElement) => {
+    if (isPlaybackBuffered(item, video)) {
+      seekToPlaybackStart(item, video);
+      void video.play().catch(() => { setPlaying(false); setShowPoster(true); });
+      return;
+    }
+    video.pause();
+    seekToPlaybackStart(item, video);
+    setPlaying(false);
+    setShowPoster(true);
+  };
 
   const start = () => {
     const video = ref.current;
     if (!video) return;
-    seekToPlaybackStart(item, video);
+    seekToPlaybackResume(item, video);
     setShowPoster(false);
     void video.play().catch(() => setPlaying(false));
   };
@@ -130,7 +136,7 @@ function VideoCard({ item }: { item: ContentItem }) {
     }
   };
 
-  return <article className={"video-card " + (item.variant === "video-large" ? "video-card-large" : "")}><div className="video-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload="metadata" poster={item.coverUrl || undefined} onLoadedMetadata={(event) => { seekToPlaybackStart(item, event.currentTarget); if (item.autoplay) void event.currentTarget.play().catch(() => setPlaying(false)); }} onTimeUpdate={(event) => { const video = event.currentTarget; enforcePlaybackRange(item, video); const { end } = playbackBounds(item, video); if (Number.isFinite(end) && video.currentTime >= end - 0.05) { setPlaying(false); setShowPoster(false); } }} onEnded={(event) => { event.currentTarget.pause(); setPlaying(false); setShowPoster(false); }} onClick={toggle} onPlay={() => { setPlaying(true); setShowPoster(false); }} onPause={() => setPlaying(false)} aria-label={item.displayName + " sin sonido"}><VideoSources item={item} /></video>{showPoster && !item.autoplay && <button className="video-poster" type="button" onClick={start} aria-label={"Reproducir " + item.displayName}><img src={item.coverUrl || ""} alt="Portada del video" loading="lazy" /></button>}</div></article>;
+  return <article className={"video-card " + (item.variant === "video-large" ? "video-card-large" : "")}><div className="video-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload={item.autoplay ? "none" : "metadata"} poster={item.coverUrl || undefined} onLoadedMetadata={(event) => { seekToPlaybackStart(item, event.currentTarget); if (item.autoplay) void event.currentTarget.play().catch(() => setPlaying(false)); }} onTimeUpdate={(event) => { const video = event.currentTarget; enforcePlaybackRange(item, video); const { end } = playbackBounds(item, video); if (Number.isFinite(end) && video.currentTime >= end - 0.05) finishPlayback(video); }} onEnded={(event) => finishPlayback(event.currentTarget)} onClick={toggle} onPlay={() => { setPlaying(true); setShowPoster(false); }} onPause={() => setPlaying(false)} aria-label={item.displayName + " sin sonido"}>{loaded && <VideoSources item={item} />}</video>{showPoster && item.coverUrl && <button className="video-poster" type="button" onClick={start} aria-label={"Reproducir " + item.displayName}><img src={item.coverUrl} alt="Portada del video" loading="lazy" /></button>}</div></article>;
 }
 
 function PhotoCard({ item, onExpand }: { item: ContentItem; onExpand: (item: ContentItem) => void }) {
