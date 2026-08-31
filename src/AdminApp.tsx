@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ContentItem, PhotoItem } from "./content";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -266,17 +266,26 @@ function VideoTrimControls({ item, onChange }: { item: ContentItem; onChange: (c
     applyDraft(field, String(next));
   };
 
+  const repeatTimer = useRef<ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null>(null);
+  const stopAdjusting = () => { if (repeatTimer.current !== null) { clearTimeout(repeatTimer.current as ReturnType<typeof setTimeout>); clearInterval(repeatTimer.current as ReturnType<typeof setInterval>); repeatTimer.current = null; } };
+  useEffect(() => {
+    const release = () => stopAdjusting();
+    window.addEventListener("pointerup", release);
+    window.addEventListener("blur", release);
+    return () => { window.removeEventListener("pointerup", release); window.removeEventListener("blur", release); stopAdjusting(); };
+  }, []);
+  const startAdjusting = (field: "startSeconds" | "endTrimSeconds", delta: number) => { stopAdjusting(); adjust(field, delta); repeatTimer.current = setTimeout(() => { repeatTimer.current = setInterval(() => adjust(field, delta), 70); }, 300); };
   const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") event.currentTarget.blur();
+    if (event.key === "Enter" ) event.currentTarget.blur();
   };
 
   const field = (label: string, value: string, name: "startSeconds" | "endTrimSeconds", description: string) => (
     <label className="admin-time-control">
       <span className="admin-time-label">{label}</span>
       <span className="admin-time-field">
-        <button type="button" className="admin-time-step" onClick={() => adjust(name, -0.1)} aria-label={"Reducir " + label}>−</button>
+        <button type="button" className="admin-time-step" onPointerDown={(event) => { event.preventDefault(); startAdjusting(name, -0.1); }} onPointerUp={stopAdjusting} onPointerCancel={stopAdjusting} onContextMenu={(event) => event.preventDefault()} aria-label={"Reducir " + label}>−</button>
         <input type="number" min="0" step="0.1" inputMode="decimal" value={value} onChange={(event) => applyDraft(name, event.target.value)} onBlur={(event) => commit(name, event.target.value)} onKeyDown={onKeyDown} aria-label={label} />
-        <button type="button" className="admin-time-step" onClick={() => adjust(name, 0.1)} aria-label={"Aumentar " + label}>+</button>
+        <button type="button" className="admin-time-step" onPointerDown={(event) => { event.preventDefault(); startAdjusting(name, 0.1); }} onPointerUp={stopAdjusting} onPointerCancel={stopAdjusting} onContextMenu={(event) => event.preventDefault()} aria-label={"Aumentar " + label}>+</button>
         <span className="admin-time-unit">s</span>
       </span>
       <small>{description}</small>
@@ -396,6 +405,12 @@ function AdminApp() {
   const [error, setError] = useState("");
   const [showAddVideo, setShowAddVideo] = useState(false);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLElement>());
+  const dragOrder = useRef<ContentItem[] | null>(null);
+  const dragSnapshot = useRef<ContentItem[] | null>(null);
+  const dragSaved = useRef(false);
+  const previousRowRects = useRef(new Map<string, DOMRect>());
   const hero = useMemo(() => items.find((item) => item.placement === "hero") || null, [items]);
   const gallery = useMemo(() => items.filter((item) => item.placement === "gallery").sort((a, b) => a.position - b.position), [items]);
 
@@ -411,6 +426,20 @@ function AdminApp() {
   useEffect(() => {
     if (authenticated) reload().catch((err) => setError(err.message));
   }, [authenticated]);
+
+  useLayoutEffect(() => {
+    const nextRects = new Map<string, DOMRect>();
+    rowRefs.current.forEach((element, id) => nextRects.set(id, element.getBoundingClientRect()));
+    rowRefs.current.forEach((element, id) => {
+      const previous = previousRowRects.current.get(id);
+      const next = nextRects.get(id);
+      if (!previous || !next || Math.abs(previous.top - next.top) < 1) return;
+      element.style.transition = "none";
+      element.style.transform = "translateY(" + (previous.top - next.top) + "px)";
+      requestAnimationFrame(() => { element.style.transition = "transform 180ms ease"; element.style.transform = ""; });
+    });
+    previousRowRects.current = nextRects;
+  }, [items]);
 
   if (authenticated === null) return <main className="admin-shell"><p>Cargando…</p></main>;
   if (!authenticated) return <Login onSuccess={() => setAuthenticated(true)} />;
@@ -474,33 +503,48 @@ function AdminApp() {
     void saveOrder(next, target);
   };
 
+  const autoScroll = (clientY: number) => {
+    const edge = 92;
+    const distance = clientY < edge ? clientY - edge : clientY > window.innerHeight - edge ? clientY - (window.innerHeight - edge) : 0;
+    if (distance) window.scrollBy(0, Math.max(-18, Math.min(18, distance * 0.22)));
+  };
+
+  const updateDraggedGallery = (targetId: string) => {
+    const sourceId = draggingId;
+    const current = dragOrder.current;
+    if (!sourceId || !current) return;
+    const from = current.findIndex((entry) => entry.id === sourceId);
+    const to = current.findIndex((entry) => entry.id === targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = [...current];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    dragOrder.current = next;
+    setItems((entries) => {
+      const byId = new Map(next.map((entry, index) => [entry.id, { ...entry, position: index }]));
+      return entries.map((entry) => byId.get(entry.id) || entry);
+    });
+  };
+
+  const handleDragEnter = (event: DragEvent, target: ContentItem) => {
+    event.preventDefault();
+    setDragOverId(target.id);
+    autoScroll(event.clientY);
+    if (target.placement === "gallery") updateDraggedGallery(target.id);
+  };
+
   const handleDrop = (event: DragEvent, target: ContentItem) => {
     event.preventDefault();
     event.stopPropagation();
     setDragOverId(null);
-    const sourceId = event.dataTransfer.getData("text/plain");
+    dragSaved.current = true;
+    const sourceId = draggingId || event.dataTransfer.getData("text/plain");
     const source = items.find((entry) => entry.id === sourceId);
     if (!source || source.id === target.id) return;
-
-    if (target.placement === "hero" && source.placement === "gallery") {
-      promoteGalleryVideo(source.id);
-      return;
-    }
-    if (target.placement === "gallery" && source.placement === "hero") {
-      swapHeroWith(target);
-      return;
-    }
-    if (target.placement !== "gallery" || source.placement !== "gallery") return;
-
-    const from = gallery.findIndex((entry) => entry.id === sourceId);
-    const to = gallery.findIndex((entry) => entry.id === target.id);
-    if (from < 0 || to < 0 || from === to) return;
-    const next = [...gallery];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    void saveOrder(next);
+    if (target.placement === "hero" && source.placement === "gallery") { promoteGalleryVideo(source.id); return; }
+    if (target.placement === "gallery" && source.placement === "hero") { swapHeroWith(target); return; }
+    if (source.placement === "gallery" && target.placement === "gallery" && dragOrder.current) void saveOrder(dragOrder.current);
   };
-
   const handleHeroDrop = (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -563,15 +607,26 @@ function AdminApp() {
     <article
       className={"admin-row " + (dragOverId === item.id ? "is-drag-over" : "")}
       key={item.id}
+      ref={(element) => { if (element) rowRefs.current.set(item.id, element); else rowRefs.current.delete(item.id); }}
       draggable={item.type === "video" || item.placement === "gallery"}
       onDragStart={(event) => {
+        dragSnapshot.current = items;
+        dragOrder.current = [...gallery];
+        dragSaved.current = false;
+        setDraggingId(item.id);
         event.dataTransfer.setData("text/plain", item.id);
         event.dataTransfer.effectAllowed = "move";
       }}
-      onDragEnd={() => setDragOverId(null)}
-      onDragEnter={() => setDragOverId(item.id)}
+      onDragEnd={() => {
+        if (!dragSaved.current && dragSnapshot.current) setItems(dragSnapshot.current);
+        dragOrder.current = null;
+        dragSnapshot.current = null;
+        setDraggingId(null);
+        setDragOverId(null);
+      }}
+      onDragEnter={(event) => handleDragEnter(event, item)}
       onDragLeave={() => setDragOverId(null)}
-      onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }}
+      onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; autoScroll(event.clientY); }}
       onDrop={(event) => handleDrop(event, item)}
     >
       <div className="admin-row-main">
@@ -628,7 +683,7 @@ function AdminApp() {
         <div className="admin-section-heading"><div><h2>Video Hero</h2><p>Arrastra un video aquí para intercambiarlo con el destacado actual.</p></div></div>
         {hero ? row(hero) : <div className={"admin-empty-hero " + (dragOverId === "hero-empty" ? "is-drag-over" : "")} onDragEnter={() => setDragOverId("hero-empty")} onDragLeave={() => setDragOverId(null)} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }} onDrop={handleHeroDrop}>Arrastra un video aquí para ocupar el Hero</div>}
       </section>
-      <section className="admin-section"><h2>Galería ordenable</h2>{gallery.map((item, index) => row(item, index))}</section>
+      <section className="admin-section" onDragOver={(event) => { event.preventDefault(); autoScroll(event.clientY); }}><h2>Galería ordenable</h2>{gallery.map((item, index) => row(item, index))}</section>
     </main>
   );
 }

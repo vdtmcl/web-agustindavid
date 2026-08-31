@@ -119,7 +119,7 @@ h2 { margin: 0; color: #f2f0ed; font-size: clamp(2rem, 3.8vw, 3.35rem); font-wei
 .admin-status-error, .admin-error { color: #e8a29a; }
 .admin-section { max-width: 1160px; margin: 0 auto 36px; }
 .admin-section h2 { margin-bottom: 12px; font-size: 18px; letter-spacing: -.03em; }
-.admin-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; margin-bottom: 8px; padding: 10px; border: 1px solid #282828; background: #0b0b0b; }
+.admin-row { transition: transform 180ms ease; will-change: transform; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; margin-bottom: 8px; padding: 10px; border: 1px solid #282828; background: #0b0b0b; }
 .admin-row[draggable="true"] { cursor: grab; }
 .admin-row-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .admin-row-main > img { width: 118px; aspect-ratio: 16 / 9; flex: 0 0 auto; object-fit: cover; background: #111; }
@@ -256,6 +256,7 @@ h2 { margin: 0; color: #f2f0ed; font-size: clamp(2rem, 3.8vw, 3.35rem); font-wei
 }
 .admin-time-field input:focus { outline: 1px solid #a8c5c0; outline-offset: -1px; }
 .admin-time-step {
+  touch-action: none;
   width: 25px !important;
   height: 27px !important;
   padding: 0;
