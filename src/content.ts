@@ -44,6 +44,7 @@ const videos = [
   ["1787833089", "clip001_25"],
   ["1787833068", "clip001_26"],
   ["1787833067", "clip001_27"],
+  ["1788147732", "clip-compartevalpo-agustindavid-10"],
 ].map(([version, name]) => ({ publicId: "v" + version + "/" + name, name }));
 function contentItem(publicId: string, displayName: string, position: number, placement: "hero" | "gallery"): ContentItem { return { id: placement === "hero" ? "hero-existing" : "video-" + position, type: "video", variant: placement === "hero" ? "hero" : "small", placement, position, displayName, autoplay: placement === "hero", startSeconds: 0, endTrimSeconds: 0, coverUrl: frameUrl(publicId, 3, placement === "hero" ? 480 : 360), videoUrl: videoUrl(publicId, placement === "hero" ? 480 : 360), mobileVideoUrl: videoUrl(publicId, placement === "hero" ? 360 : 240), photos: [] }; }
 export const fallbackContent: ContentResponse = { hero: contentItem(videos[0].publicId, videos[0].name, 0, "hero"), gallery: videos.slice(1).map((video, index) => contentItem(video.publicId, video.name, index, "gallery")) };

@@ -38,6 +38,7 @@ export const catalogGallery: CatalogVideo[] = [
   { publicId: "v1787833089/clip001_25", format: "mov" },
   { publicId: "v1787833068/clip001_26", format: "mov" },
   { publicId: "v1787833067/clip001_27", format: "mov" },
+  { publicId: "v1788147732/clip-compartevalpo-agustindavid-10.mp4", format: "mp4" },
 ];
 
 export function catalogDisplayName(publicId: string) {
