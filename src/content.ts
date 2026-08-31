@@ -4,7 +4,8 @@ export type ContentResponse = { hero: ContentItem | null; gallery: ContentItem[]
 
 function videoCloudName(publicId: string) { return publicId.startsWith("v178") ? "jtrus9f7" : "vdtm-cl"; }
 export function videoUrl(publicId: string, maxHeight = 360) { return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/c_limit,h_" + maxHeight + "/f_auto/q_auto/" + publicId.split("/").map(encodeURIComponent).join("/"); }
-export function frameUrl(publicId: string, seconds = 3, maxHeight = 360) { return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + publicId.split("/").map(encodeURIComponent).join("/") + ".jpg"; }
+export function frameUrl(publicId: string, seconds = 3, maxHeight = 360) { const source = publicId.replace(/\.[a-z0-9]+$/i, "");
+  return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + source.split("/").map(encodeURIComponent).join("/") + ".jpg"; }
 
 const videos = [
   ["1788143277", "clip-compartevalpo-agustindavid-07"],

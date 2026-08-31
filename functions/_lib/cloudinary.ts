@@ -11,7 +11,8 @@ export function videoUrl(publicId: string, _format: string, maxHeight = 360) {
 }
 
 export function frameUrl(publicId: string, seconds = 3, maxHeight = 360) {
-  return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + path(publicId) + ".jpg";
+  const source = publicId.replace(/\.[a-z0-9]+$/i, "");
+  return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + path(source) + ".jpg";
 }
 
 export function imageUrl(publicId: string, width = 1920, height = 1080, crop = "limit") {
