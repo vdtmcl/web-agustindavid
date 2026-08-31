@@ -45,7 +45,7 @@ function isPlaybackBuffered(item: ContentItem, video: HTMLVideoElement) {
   return false;
 }
 
-function useVisibleAutoplay(ref: RefObject<HTMLVideoElement | null>, enabled: boolean, item: ContentItem, loaded = true, onLoad = () => undefined) {
+function useVisibleAutoplay(ref: RefObject<HTMLVideoElement | null>, enabled: boolean, item: ContentItem, loaded = true, onLoad: () => void = () => undefined) {
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
