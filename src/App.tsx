@@ -73,28 +73,40 @@ function VideoSources({ item }: { item: ContentItem }) {
 }
 
 function FeaturedVideo({ item }: { item: ContentItem }) {
+  const [showPoster, setShowPoster] = useState(false);
   const ref = useRef<HTMLVideoElement>(null);
   useVisibleAutoplay(ref, item.autoplay, item);
+
+  const finishPlayback = (video: HTMLVideoElement) => {
+    if (isPlaybackBuffered(item, video)) {
+      seekToPlaybackStart(item, video);
+      void video.play().catch(() => setShowPoster(true));
+      return;
+    }
+    video.pause();
+    seekToPlaybackStart(item, video);
+    setShowPoster(true);
+  };
 
   const start = () => {
     const video = ref.current;
     if (!video) return;
-    seekToPlaybackStart(item, video);
-    if (item.autoplay) void video.play().catch(() => undefined);
+    seekToPlaybackResume(item, video);
+    setShowPoster(false);
+    void video.play().catch(() => setShowPoster(true));
   };
 
   const toggle = () => {
     const video = ref.current;
     if (!video) return;
     if (video.paused) {
-      seekToPlaybackResume(item, video);
-      void video.play().catch(() => undefined);
+      start();
     } else {
       video.pause();
     }
   };
 
-  return <section className="featured" aria-label="Video destacado"><div className="video-frame featured-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload="auto" poster={item.coverUrl || undefined} onLoadedMetadata={start} onTimeUpdate={(event) => enforcePlaybackRange(item, event.currentTarget)} onClick={toggle} aria-label="Video destacado sin sonido"><VideoSources item={item} /></video></div><div className="featured-copy"><div className="featured-slide"><h1>Agustín David</h1><p>Realizador audiovisual porteño, desde el 2015 con foco en disciplinas artísticas y patrimonio regional.</p></div></div></section>;
+  return <section className="featured" aria-label="Video destacado"><div className="video-frame featured-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload="auto" poster={item.coverUrl || undefined} onLoadedMetadata={start} onTimeUpdate={(event) => { const video = event.currentTarget; enforcePlaybackRange(item, video); const { end } = playbackBounds(item, video); if (Number.isFinite(end) && video.currentTime >= end - 0.05) finishPlayback(video); }} onEnded={(event) => finishPlayback(event.currentTarget)} onClick={toggle} aria-label="Video destacado sin sonido"><VideoSources item={item} /></video>{showPoster && item.coverUrl && <button className="video-poster" type="button" onClick={start} aria-label="Reproducir video destacado"><img src={item.coverUrl} alt="Portada del video destacado" /></button>}</div><div className="featured-copy"><div className="featured-slide"><h1>Agustín David</h1><p>Realizador audiovisual porteño, desde el 2015, con foco en disciplinas artísticas y patrimonio regional.</p></div></div></section>;
 }
 
 function VideoCard({ item }: { item: ContentItem }) {
