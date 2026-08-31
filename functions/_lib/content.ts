@@ -6,10 +6,23 @@ function photo(row: any, full: boolean) {
 }
 
 export async function syncVideoCatalog(env: any) {
-  const statements: any[] = [env.DB.prepare("DELETE FROM content_items WHERE type = 'video'")];
-  if (catalogHero) statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'hero', 'hero', 0, ?2, ?3, ?4, 1, 1)").bind("hero-" + crypto.randomUUID(), catalogHero.publicId, catalogHero.format, catalogDisplayName(catalogHero.publicId)));
-  catalogGallery.forEach((video, index) => statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'small', 'gallery', ?2, ?3, ?4, ?5, 0, 1)").bind("video-" + crypto.randomUUID(), index, video.publicId, video.format, catalogDisplayName(video.publicId))));
-  await env.DB.batch(statements);
+  const existing = await env.DB.prepare("SELECT id, public_id FROM content_items WHERE type = 'video'").all();
+  const existingPublicIds = new Set((existing.results || []).map((row: any) => row.public_id));
+  const statements: any[] = [];
+
+  if (catalogHero && !existingPublicIds.has(catalogHero.publicId)) {
+    statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'hero', 'hero', 0, ?2, ?3, ?4, 1, 1)").bind("hero-" + crypto.randomUUID(), catalogHero.publicId, catalogHero.format, catalogDisplayName(catalogHero.publicId)));
+    existingPublicIds.add(catalogHero.publicId);
+  }
+
+  const maxPosition = await env.DB.prepare("SELECT COALESCE(MAX(position), -1) AS max_position FROM content_items WHERE placement = 'gallery' AND active = 1").first();
+  let nextPosition = Number(maxPosition?.max_position ?? -1) + 1;
+  catalogGallery.forEach((video) => {
+    if (existingPublicIds.has(video.publicId)) return;
+    statements.push(env.DB.prepare("INSERT INTO content_items (id, type, variant, placement, position, public_id, format, display_name, autoplay, active) VALUES (?1, 'video', 'small', 'gallery', ?2, ?3, ?4, ?5, 0, 1)").bind("video-" + crypto.randomUUID(), nextPosition++, video.publicId, video.format, catalogDisplayName(video.publicId)));
+    existingPublicIds.add(video.publicId);
+  });
+  if (statements.length) await env.DB.batch(statements);
 }
 
 export async function loadContent(env: any, admin = false) {
