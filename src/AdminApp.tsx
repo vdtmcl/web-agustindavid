@@ -406,6 +406,7 @@ function AdminApp() {
   const [showAddVideo, setShowAddVideo] = useState(false);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const draggingIdRef = useRef<string | null>(null);
   const rowRefs = useRef(new Map<string, HTMLElement>());
   const dragOrder = useRef<ContentItem[] | null>(null);
   const dragSnapshot = useRef<ContentItem[] | null>(null);
@@ -510,7 +511,7 @@ function AdminApp() {
   };
 
   const updateDraggedGallery = (targetId: string) => {
-    const sourceId = draggingId;
+    const sourceId = draggingIdRef.current;
     const current = dragOrder.current;
     if (!sourceId || !current) return;
     const from = current.findIndex((entry) => entry.id === sourceId);
@@ -526,24 +527,30 @@ function AdminApp() {
     });
   };
 
-  const handleDragEnter = (event: DragEvent, target: ContentItem) => {
+  const handleDragOver = (event: DragEvent, target: ContentItem) => {
     event.preventDefault();
-    setDragOverId(target.id);
+    event.dataTransfer.dropEffect = "move";
     autoScroll(event.clientY);
-    if (target.placement === "gallery") updateDraggedGallery(target.id);
+    if (target.placement !== "gallery" || !draggingIdRef.current || target.id === draggingIdRef.current) return;
+    const current = dragOrder.current;
+    if (!current) return;
+    const from = current.findIndex((entry) => entry.id === draggingIdRef.current);
+    const to = current.findIndex((entry) => entry.id === target.id);
+    if (from < 0 || to < 0 || from === to) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const crossed = from < to ? event.clientY > rect.top + rect.height * 0.58 : event.clientY < rect.top + rect.height * 0.42;
+    if (crossed) updateDraggedGallery(target.id);
+    setDragOverId(target.id);
   };
-
   const handleDrop = (event: DragEvent, target: ContentItem) => {
     event.preventDefault();
     event.stopPropagation();
     setDragOverId(null);
-    dragSaved.current = true;
-    const sourceId = draggingId || event.dataTransfer.getData("text/plain");
+    const sourceId = draggingIdRef.current || event.dataTransfer.getData("text/plain");
     const source = items.find((entry) => entry.id === sourceId);
     if (!source || source.id === target.id) return;
-    if (target.placement === "hero" && source.placement === "gallery") { promoteGalleryVideo(source.id); return; }
-    if (target.placement === "gallery" && source.placement === "hero") { swapHeroWith(target); return; }
-    if (source.placement === "gallery" && target.placement === "gallery" && dragOrder.current) void saveOrder(dragOrder.current);
+    if (target.placement === "hero" && source.placement === "gallery") { dragSaved.current = true; promoteGalleryVideo(source.id); return; }
+    if (target.placement === "gallery" && source.placement === "hero") { dragSaved.current = true; swapHeroWith(target); return; }
   };
   const handleHeroDrop = (event: DragEvent) => {
     event.preventDefault();
@@ -551,7 +558,7 @@ function AdminApp() {
     setDragOverId(null);
     const sourceId = event.dataTransfer.getData("text/plain");
     const source = items.find((entry) => entry.id === sourceId);
-    if (source?.placement === "gallery" && source.type === "video") promoteGalleryVideo(source.id);
+    if (source?.placement === "gallery" && source.type === "video") { dragSaved.current = true; promoteGalleryVideo(source.id); }
     else setError("Arrastra un video de la galería para ocupar el Hero.");
   };
 
@@ -613,20 +620,26 @@ function AdminApp() {
         dragSnapshot.current = items;
         dragOrder.current = [...gallery];
         dragSaved.current = false;
+        draggingIdRef.current = item.id;
         setDraggingId(item.id);
         event.dataTransfer.setData("text/plain", item.id);
         event.dataTransfer.effectAllowed = "move";
       }}
       onDragEnd={() => {
-        if (!dragSaved.current && dragSnapshot.current) setItems(dragSnapshot.current);
+        const before = dragSnapshot.current?.filter((entry) => entry.placement === "gallery").map((entry) => entry.id).join(",");
+        const after = dragOrder.current?.map((entry) => entry.id).join(",");
+        const changed = Boolean(before && after && before !== after);
+        if (!dragSaved.current && changed && dragOrder.current) void saveOrder(dragOrder.current);
+        else if (!dragSaved.current && dragSnapshot.current) setItems(dragSnapshot.current);
         dragOrder.current = null;
         dragSnapshot.current = null;
+        draggingIdRef.current = null;
         setDraggingId(null);
         setDragOverId(null);
       }}
-      onDragEnter={(event) => handleDragEnter(event, item)}
-      onDragLeave={() => setDragOverId(null)}
-      onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; autoScroll(event.clientY); }}
+      onDragEnter={() => setDragOverId(item.id)}
+      onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragOverId(null); }}
+      onDragOver={(event) => handleDragOver(event, item)}
       onDrop={(event) => handleDrop(event, item)}
     >
       <div className="admin-row-main">
