@@ -101,7 +101,7 @@ function FeaturedVideo({ item }: { item: ContentItem }) {
     }
   };
 
-  return <section className="featured" aria-label="Video destacado"><div className="video-frame featured-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload="auto" poster={item.coverUrl || undefined} onLoadedMetadata={start} onTimeUpdate={(event) => enforcePlaybackRange(item, event.currentTarget)} onClick={toggle} aria-label="Video destacado sin sonido"><VideoSources item={item} /></video></div><div className="featured-copy"><div className="featured-slide"><h1>Agustín David</h1><p>Realizador audiovisual desde 2015, con foco en disciplinas artísticas, principalmente en la comuna de Valparaíso.</p></div></div></section>;
+  return <section className="featured" aria-label="Video destacado"><div className="video-frame featured-frame"><video key={videoSourceKey(item)} ref={ref} autoPlay={item.autoplay} muted playsInline preload="auto" poster={item.coverUrl || undefined} onLoadedMetadata={start} onTimeUpdate={(event) => enforcePlaybackRange(item, event.currentTarget)} onClick={toggle} aria-label="Video destacado sin sonido"><VideoSources item={item} /></video></div><div className="featured-copy"><div className="featured-slide"><h1>Agustín David</h1><p>Realizador audiovisual porteño, desde el 2015, con foco en disciplinas artísticas y patrimonio regional.</p></div></div></section>;
 }
 
 function VideoCard({ item }: { item: ContentItem }) {
