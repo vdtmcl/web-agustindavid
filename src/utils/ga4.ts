@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /**
  * Google Analytics 4: una etiqueta por sitio. Activación por VITE_GA_MEASUREMENT_ID.
  * Enhanced Measurement registra vistas de página y cambios de historial SPA.
