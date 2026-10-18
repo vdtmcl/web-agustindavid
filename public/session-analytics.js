@@ -21,13 +21,15 @@
   try { saved = JSON.parse(sessionStorage.getItem(STORAGE) || 'null'); } catch { /* noop */ }
   const isFresh = !saved || !/^[a-f0-9]{32}$/.test(saved.id || '') ||
     !Number.isFinite(saved.seen) || now - saved.seen > IDLE_LIMIT || now < saved.seen;
-  const id = isFresh ? crypto.randomUUID().replace(/-/g, '') : saved.id;
+  let id = isFresh ? crypto.randomUUID().replace(/-/g, '') : saved.id;
+  let lastSeen = now;
   let path = currentPath();
   let lastTick = performance.now();
   let lastActivity = now;
 
   function remember() {
-    try { sessionStorage.setItem(STORAGE, JSON.stringify({ id, seen: Date.now() })); }
+    lastSeen = Date.now();
+    try { sessionStorage.setItem(STORAGE, JSON.stringify({ id, seen: lastSeen })); }
     catch { /* Duración limitada a esta carga cuando el navegador bloquea sessionStorage. */ }
   }
 
@@ -58,7 +60,19 @@
     }
   }
 
+  function renewIfIdle() {
+    if (Date.now() - lastSeen <= IDLE_LIMIT) return;
+    id = crypto.randomUUID().replace(/-/g, '');
+    lastActivity = Date.now();
+    remember();
+    if (isPublic(path)) {
+      send('start');
+      send('view');
+    }
+  }
+
   function routeChange() {
+    renewIfIdle();
     const next = currentPath();
     if (next === path) return;
     pulse();
@@ -83,13 +97,14 @@
     return result;
   };
   addEventListener('popstate', routeChange);
-  addEventListener('pageshow', () => { lastTick = performance.now(); });
+  addEventListener('pageshow', () => { renewIfIdle(); lastTick = performance.now(); });
   addEventListener('pagehide', () => {
     pulse(true);
     send('end');
   });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') pulse(true);
+    else renewIfIdle();
     lastTick = performance.now();
   });
   for (const event of ['pointermove', 'pointerdown', 'keydown', 'scroll', 'touchstart']) {
@@ -99,5 +114,8 @@
   remember();
   if (isFresh) send('start');
   send('view');
-  setInterval(pulse, PULSE_INTERVAL);
+  setInterval(() => {
+    if (document.visibilityState === 'visible') renewIfIdle();
+    pulse();
+  }, PULSE_INTERVAL);
 })();
