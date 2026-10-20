@@ -40,6 +40,7 @@ export function initializeGA4(rawMeasurementId: unknown, isProduction: boolean):
     const taggedWindow = window as AnalyticsWindow;
     taggedWindow.dataLayer ??= [];
     // Keep the standard gtag queue format; the Google tag consumes the Arguments object.
+    // eslint-disable-next-line prefer-rest-params
     taggedWindow.gtag ??= function () { taggedWindow.dataLayer?.push(arguments); };
     taggedWindow.gtag("js", new Date());
     taggedWindow.gtag("config", measurementId, {
