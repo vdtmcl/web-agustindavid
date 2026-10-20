@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { initializeGA4 } from './utils/ga4';
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
