@@ -1,5 +1,17 @@
 # BITACORA.md — agustindavid.cl
 
+## CIERRE_PROTOCOLO_MULTISITIO_20261020
+
+- **Solicitud de cierre:** 2026-10-20 13:29:05, America/Santiago. Sesión de gobierno multisitio; no es una auditoría nueva del estado productivo de esta web.
+- **Objetivo y resultado:** simplificar las instrucciones de WEB VDTM NUBE y separar reglas estables de datos operativos. Versión definitiva de 3.930 caracteres entregada en el chat; Agustín confirmó «aplicado». La configuración de ChatGPT no fue inspeccionada por herramienta: la aplicación consta por confirmación del usuario.
+- **Decisiones:** una tarea a la vez; controles proporcionales al cambio; «aplica y sube»/«publica» constituye autorización específica del cambio y no requiere una segunda aprobación idéntica. Se mantienen los controles obligatorios y restricciones de las herramientas. Las referencias antiguas a pedir siempre una segunda aprobación son históricas y no deben reintroducirla frente a esta autorización vigente.
+- **Continuidad:** AGENTS conserva reglas del sitio; BITACORA mantiene estado, evidencia y pendientes; OPERATIONS conserva procedimientos. Los datos variables no se mantienen en instrucciones ni en el antiguo adjunto central. «Cierre de sesión» consolida y persiste documentación; no cierra cuentas. Registrar también hitos durante trabajos largos.
+- **NIC.cl:** quedó autorizada la gestión técnica dentro de los proyectos solicitados, con alcance y destino validados. Observación NIC.cl anterior en este chat (2026-10-20): ficha de agustindavid.cl accesible; nameservers rayne.ns.cloudflare.com y nikon.ns.cloudflare.com. No se guardaron cambios ni se probó escritura; no revalidado al cierre.
+- **Cambio de este cierre:** únicamente BITACORA.md en este repositorio. Rama documental codex/admin-multisitio-20261008; PR #6 abierto y sin merge; base main. HEAD leído antes del cierre: f8ad601980aa52009b7dbd3c4df441249a393d34. El SHA del commit de cierre queda en el historial remoto de este archivo.
+- **Validación:** lectura autenticada de AGENTS.md, BITACORA.md, árbol Git y referencia/PR en GitHub. No se ejecutaron builds, pruebas funcionales, revisión visual ni despliegues manuales por este cambio documental. No se revalidaron producción, DNS, Cloudflare ni sesiones de navegador al cierre; los snapshots anteriores conservan sus fechas y deben reconsultarse cuando sean necesarios.
+- **Límite conocido:** el entorno de ejecución local quedó indisponible; el archivo WEB_VDTM_NUBE_MULTISITIO.md abierto no pudo reemplazarse por el último texto compacto. La versión larga anterior no es la política vigente ni una fuente de estado. Retirar su uso como protocolo adjunto si aún existe; no se confirmó su retirada. Las instrucciones definitivas aplicadas por Agustín son la referencia de política.
+- **Pendientes y siguiente paso:** conservar los PR anteriores y sus dependencias sin fusionarlos por este cierre. Retomar con una tarea y sitio concretos, leer esta bitácora desde su rama/PR vigente y contrastar solo los datos necesarios. No se cambiaron código, main, producción, DNS, secretos ni permisos durante este cierre.
+
 ## ESTADO_ACTUAL
 
 Auditoría 2026-10-08 UTC. Repositorio vdtmcl/web-agustindavid, main en 773421961878f600de1def4770763aa4d9948f5c. Cloudflare web-agustindavid, cuenta 7d5cdcf87df07007a26fc926025fbfc7. Dominios agustindavid.cl y www.agustindavid.cl activos.
@@ -36,4 +48,4 @@ Pruebas nuevas y preview de esta rama: consultar PR y resultados finales; no inf
 
 ## FUENTES_DE_DETALLE
 
-AGENTS.md, docs/OPERATIONS.md, package.json, .github/workflows/, migrations/, Git y API de Cloudflare. El registro de WEB VDTM NUBE sirve para seleccionar sitio; este repositorio conserva su verdad técnica.
+AGENTS.md, docs/OPERATIONS.md, package.json, .github/workflows/, migrations/, Git y API de Cloudflare. La identidad y el estado técnico se mantienen en este repositorio; la política general está en las instrucciones vigentes de WEB VDTM NUBE.
