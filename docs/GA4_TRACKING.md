@@ -14,7 +14,7 @@
 
 ## Código, consentimiento y activación
 - `src/utils/ga4.ts` carga `gtag.js` solo en producción, con un ID válido y después de aceptar la analítica en el aviso del sitio. Sin una decisión, tras rechazar o con Global Privacy Control (GPC) activo, no se carga la etiqueta ni se envían solicitudes de GA4. `/admin` queda excluido.
-- El aviso explica que Google Analytics 4 mide visitas y navegación para mejorar el sitio, ofrece aceptar o rechazar y enlaza a la política de privacidad de Google. El control permanente `Preferencias de analítica` permite cambiar la elección.
+- El aviso explica que Google Analytics 4 mide visitas y navegación para mejorar el sitio, ofrece aceptar o rechazar y enlaza a la política de privacidad de Google. El control permanente `Preferencias de analítica` permite cambiar la elección. Para excluir un navegador específico, abrir `/?ga4_tracking=off`; el parámetro guarda el rechazo para ese hostname.
 - La elección queda guardada en el almacenamiento local del navegador para este hostname. Si el navegador lo bloquea, no se carga la etiqueta sin una aceptación explícita en la visita actual.
 - Los indicadores de publicidad de Google están desactivados en la configuración de GA4. No se instalan GTM ni eventos manuales; la propiedad genera las vistas de página y los cambios SPA mediante Medición mejorada.
 - Cloudflare Pages usa `VITE_GA_MEASUREMENT_ID=G-X1CFHXTB5L` en los entornos preview y production. El ID es público; no es una credencial ni un secreto.
