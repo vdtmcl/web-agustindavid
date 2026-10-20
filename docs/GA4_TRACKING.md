@@ -5,29 +5,27 @@
 - Propiedad GA4: `Agustín David` (ID `559470829`).
 - Flujo web `Agustín David`: `https://agustindavid.cl` (ID de flujo `16155071724`).
 - ID de medición: `G-X1CFHXTB5L`.
-- Medición mejorada: activada. La recogida empieza al servir la etiqueta; Google indica que puede tardar hasta 48 horas.
-
+- Medición mejorada activada: cargas de página y cambios del historial del navegador.
 
 ## Alcance y separación
-- Cuenta administradora: `VDTM 2026` (ID `382406614`).
-- La **propiedad GA4 y el flujo web de este sitio son exclusivos**. Nunca emplear el ID de VDTM ni de otro cliente.
-- Maqueta y web publicada pueden usar la misma propiedad para preservar el historial; separar sus métricas con la dimensión `hostName` y el dominio. Evitar mezclar pruebas internas mediante filtros de tráfico interno o exclusión por navegador.
-- Despliegue Cloudflare Pages: `web-agustindavid` (producción `main`, preview en ramas de revisión). URL principal actual de referencia: `https://agustindavid.cl/`.
+- La propiedad y el flujo son exclusivos de este sitio; nunca emplear el ID de otro sitio o cliente.
+- Las métricas de previews y producción comparten propiedad; distinguirlas por hostname. No usar el tráfico de pruebas como referencia de usuarios reales.
+- Cloudflare Pages: `web-agustindavid`; producción en `main`, previews en ramas de revisión. URL pública de referencia: `https://agustindavid.cl/`.
 
-## Código y activación
-- `src/utils/ga4.ts` carga `gtag.js` solo cuando `VITE_GA_MEASUREMENT_ID` contiene un identificador válido `G-…` en un build Vite. No necesita npm adicional, API ni base D1.
-- `VITE_GA_MEASUREMENT_ID` está configurada en Cloudflare Pages solo para **preview**. Producción permanece sin esta variable hasta una autorización específica de publicación. El ID de medición es público, no es un secreto.
-- En la propiedad GA4: Administrar > Flujos de datos > Web > Medición optimizada > Vistas de página, habilitar **cargas de páginas** y **cambios de página por historial del navegador** (React Router). No instalar otro gtag o GTM simultáneamente, ni emitir `page_view` manualmente.
-- Para excluir el navegador propio por origen, visitar `/?ga4_tracking=off`. Para reanudar `/?ga4_tracking=on`; el valor se guarda por navegador y dominio. También se excluye `/admin` y se respeta Global Privacy Control.
-- Documentar el uso de Google Analytics en el aviso de privacidad propio y comprobar los requisitos de consentimiento antes de activar la recopilación en el entorno público.
+## Código, consentimiento y activación
+- `src/utils/ga4.ts` carga `gtag.js` solo en producción, con un ID válido y después de aceptar la analítica en el aviso del sitio. Sin una decisión, tras rechazar o con Global Privacy Control (GPC) activo, no se carga la etiqueta ni se envían solicitudes de GA4. `/admin` queda excluido.
+- El aviso explica que Google Analytics 4 mide visitas y navegación para mejorar el sitio, ofrece aceptar o rechazar y enlaza a la política de privacidad de Google. El control permanente `Preferencias de analítica` permite cambiar la elección.
+- La elección queda guardada en el almacenamiento local del navegador para este hostname. Si el navegador lo bloquea, no se carga la etiqueta sin una aceptación explícita en la visita actual.
+- Los indicadores de publicidad de Google están desactivados en la configuración de GA4. No se instalan GTM ni eventos manuales; la propiedad genera las vistas de página y los cambios SPA mediante Medición mejorada.
+- Cloudflare Pages usa `VITE_GA_MEASUREMENT_ID=G-X1CFHXTB5L` en los entornos preview y production. El ID es público; no es una credencial ni un secreto.
 
 ## Validación y continuidad
-1. Confirmar que el nombre, el dominio y los IDs de la propiedad y del flujo coinciden con la tabla anterior. No guardar credenciales OAuth en Git.
-2. Configurar ID de preview y comprobar que Cloudflare deploy reporta environment=preview, SHA esperado y success. En DebugView/Realtime de GA4, visitar dos rutas y verificar 1 `page_view` por carga/cambio. Confirmar que el opt-out no registra una visita.
-3. Configurar ID de producción solo tras autorización específica de publicación. Verificar `main`, commit, deployment y URL; no inferir producción por un CI verde.
-4. Conectar GA4 a Windsor.ai desde este proyecto con OAuth de lectura de `vdtm.cl@gmail.com`, seleccionar las propiedades de cada sitio. No expone credenciales en repos.
-5. Mantener un flujo de datos por sitio; al migrar de la maqueta al dominio definitivo, mantener la propiedad e identificar cada etapa mediante el hostname.
+1. Confirmar que propiedad, hostname e ID de medición coinciden con esta ficha.
+2. Antes de aceptar el aviso, comprobar que no se inserta `gtag.js` ni salen solicitudes a GA4. Tras aceptar, verificar `page_view` en Realtime/DebugView y un único evento por carga o cambio de ruta.
+3. Repetir la comprobación con rechazo y GPC activo: no debe enviarse tráfico. Cambiar la elección desde `Preferencias de analítica`.
+4. Verificar en Cloudflare la rama, SHA, entorno production y estado success; abrir la URL pública. Los informes estándar pueden tardar en poblarse después de que Realtime reciba eventos.
+5. Mantener separado el análisis de cada sitio. Cualquier integración externa con GA4 debe usar solo acceso de lectura y seleccionar esta propiedad.
 
 ## Reversión
-- Retirar el ID de Cloudflare Pages (previews y/o producción por separado), re-desplegar y comprobar cese de nuevos eventos; o revertir el commit mediante `git revert`. Los datos ya almacenados en Google Analytics no se borran con un rollback del frontend.
-- No modificar propiedades Google, DNS, cuentas, secretos ni hosting en producción como parte de este PR. Revisar y aprobar antes de fusionar.
+- Eliminar `VITE_GA_MEASUREMENT_ID` del entorno production y volver a desplegar; o revertir el merge de GA4. Después comprobar que no se carga `gtag.js`. Los datos ya almacenados en Google Analytics no se eliminan al revertir.
+- No se modifican propiedades de Google, DNS, dominios, cuentas ni credenciales. La activación aprobada se limita al código del sitio y su variable pública de Cloudflare Pages.
