@@ -75,17 +75,70 @@ function CoverInput({ item, onUploaded }: { item: ContentItem; onUploaded: () =>
 }
 
 
+async function makeVideoPoster(file: File) {
+  const objectUrl = URL.createObjectURL(file);
+  const video = document.createElement("video");
+  video.muted = true;
+  video.preload = "metadata";
+  video.src = objectUrl;
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => resolve();
+      video.onerror = () => reject(new Error("No se pudo leer el MP4 para crear su portada."));
+    });
+    if (!Number.isFinite(video.duration) || video.duration < 0.25 || video.videoWidth < 1 || video.videoHeight < 1) throw new Error("El video no tiene una imagen válida.");
+    const second = Math.min(3, video.duration - 0.05);
+    await new Promise<void>((resolve, reject) => {
+      const timeout = window.setTimeout(() => reject(new Error("La extracción de la portada tardó demasiado.")), 10000);
+      video.onseeked = () => { window.clearTimeout(timeout); resolve(); };
+      video.onerror = () => { window.clearTimeout(timeout); reject(new Error("No se pudo extraer una imagen del video.")); };
+      video.currentTime = second;
+    });
+    const width = Math.min(video.videoWidth, 1280);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = Math.round(video.videoHeight * (width / video.videoWidth));
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("No se pudo crear la portada del video.");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((value) => value ? resolve(value) : reject(new Error("No se pudo exportar la portada del video.")), "image/webp", 0.84);
+    });
+    return new File([blob], "portada.webp", { type: "image/webp" });
+  } finally {
+    video.removeAttribute("src");
+    video.load();
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 function AddVideoForm({ onAdded, onCancel }: { onAdded: () => Promise<void> | void; onCancel: () => void }) {
-  const [url, setUrl] = useState("");
+  const videoInput = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!url.trim()) return;
+    if (!file) return;
+    if (file.size > 80 * 1024 * 1024) {
+      window.alert("El video debe pesar menos de 80 MB.");
+      return;
+    }
     setBusy(true);
     try {
-      await requestJson("/api/admin/content", { method: "POST", body: JSON.stringify({ videoUrl: url.trim() }) });
-      setUrl("");
+      const poster = await makeVideoPoster(file);
+      const form = new FormData();
+      form.set("video", file);
+      form.set("poster", poster);
+      form.set("displayName", displayName.trim());
+      const response = await fetch("/api/admin/content", { method: "POST", body: form });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "No se pudo añadir el video.");
+      setFile(null);
+      setDisplayName("");
+      if (videoInput.current) videoInput.current.value = "";
       await onAdded();
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "No se pudo añadir el video.");
@@ -98,10 +151,11 @@ function AddVideoForm({ onAdded, onCancel }: { onAdded: () => Promise<void> | vo
     <form className="admin-add-video" onSubmit={submit}>
       <div>
         <strong>Añadir video</strong>
-        <small>Pega el enlace de entrega de Cloudinary del video.</small>
+        <small>Sube un MP4 H.264 optimizado en 720p (máximo 80 MB). La portada se extrae automáticamente.</small>
       </div>
-      <input type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://res.cloudinary.com/vdtm-cl/video/upload/…" aria-label="Enlace de video de Cloudinary" required disabled={busy} />
-      <button type="submit" disabled={busy}>{busy ? "Añadiendo…" : "Añadir video"}</button>
+      <input type="text" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Nombre del video" aria-label="Nombre del video" maxLength={120} disabled={busy} />
+      <input ref={videoInput} type="file" accept="video/mp4,.mp4" aria-label="Video MP4 optimizado" required disabled={busy} onChange={(event) => setFile(event.target.files?.[0] || null)} />
+      <button type="submit" disabled={busy || !file}>{busy ? "Generando portada y subiendo…" : "Añadir video"}</button>
       <button type="button" onClick={onCancel} disabled={busy}>Cancelar</button>
     </form>
   );
@@ -385,7 +439,7 @@ function PhotoEditor({ item, onReload }: { item: ContentItem; onReload: () => vo
       <div className={gridClass}>
         {photos.map((photo, index) => (
           <div className="admin-photo-item" key={photo.id} draggable onDragStart={(event) => { event.stopPropagation(); event.dataTransfer.setData("text/plain", photo.id); }} onDragOver={(event) => { event.preventDefault(); event.stopPropagation(); }} onDrop={(event) => { event.stopPropagation(); reorderFromDrop(event, photo.id); }}>
-            <img src={photo.thumbUrl} alt={photo.alt || "Fotografía"} />
+            {photo.thumbUrl ? <img src={photo.thumbUrl} alt={photo.alt || "Fotografía"} /> : <span className="empty-media">Imagen no disponible</span>}
             <div className="admin-photo-actions">
               <button type="button" onClick={() => movePhoto(index, -1)} disabled={index === 0 || savingOrder} aria-label="Mover fotografía arriba">↑</button>
               <button type="button" onClick={() => movePhoto(index, 1)} disabled={index === photos.length - 1 || savingOrder} aria-label="Mover fotografía abajo">↓</button>
@@ -644,7 +698,7 @@ function AdminApp() {
     >
       <div className="admin-row-main">
         <span className="admin-drag" aria-hidden="true">☰</span>
-        {item.type === "video" ? <VideoPreview item={item} /> : <img src={item.coverUrl || item.photos[0]?.thumbUrl || ""} alt="" />}
+        {item.type === "video" ? <VideoPreview item={item} /> : (item.coverUrl || item.photos[0]?.thumbUrl) ? <img src={item.coverUrl || item.photos[0]?.thumbUrl || undefined} alt="" /> : <span className="empty-media">Álbum pendiente</span>}
         <div>
           <strong>{item.displayName}</strong>
           <small>{item.variant === "video-large" ? "Video Large · 16:9 · 2 columnas" : item.variant === "album-4" ? "Álbum Small · 4 fotos" : item.variant === "album-9" ? "Álbum Large · 9 fotos" : item.variant === "hero" ? "Video Hero · 16:9" : "Video Small · 16:9"}</small>

@@ -1,14 +1,8 @@
-import { localPosters } from "./posters";
+import { frameUrl, videoUrl } from "./media";
 
-export type PhotoItem = { id: string; publicId: string; position: number; alt: string; thumbUrl: string; imageUrl?: string };
+export type PhotoItem = { id: string; publicId: string; position: number; alt: string; thumbUrl: string | null; imageUrl?: string | null };
 export type ContentItem = { id: string; type: "video" | "photo_album"; variant: "hero" | "video-large" | "small" | "album-4" | "album-9"; placement: "hero" | "gallery"; position: number; displayName: string; autoplay: boolean; startSeconds: number; endTrimSeconds: number; coverUrl: string | null; videoUrl: string | null; mobileVideoUrl: string | null; photos: PhotoItem[] };
 export type ContentResponse = { hero: ContentItem | null; gallery: ContentItem[] };
-
-function videoCloudName(publicId: string) { return publicId.startsWith("v178") ? "jtrus9f7" : "vdtm-cl"; }
-export function videoUrl(publicId: string, maxHeight = 360) { return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/c_limit,h_" + maxHeight + "/f_auto/q_auto/" + publicId.split("/").map(encodeURIComponent).join("/"); }
-export function frameUrl(publicId: string, seconds = 3, maxHeight = 360) { const source = publicId.replace(/\.[a-z0-9]+$/i, "");
-  if (seconds === 3 && localPosters[source]) return localPosters[source];
-  return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + source.split("/").map(encodeURIComponent).join("/") + ".jpg"; }
 
 const videos = [
   ["1788143277", "clip-compartevalpo-agustindavid-07"],
@@ -49,5 +43,5 @@ const videos = [
   ["1787833067", "clip001_27"],
   ["1788147732", "clip-compartevalpo-agustindavid-10"],
 ].map(([version, name]) => ({ publicId: "v" + version + "/" + name, name }));
-function contentItem(publicId: string, displayName: string, position: number, placement: "hero" | "gallery"): ContentItem { return { id: placement === "hero" ? "hero-existing" : "video-" + position, type: "video", variant: placement === "hero" ? "hero" : "small", placement, position, displayName, autoplay: placement === "hero", startSeconds: 0, endTrimSeconds: 0, coverUrl: frameUrl(publicId, 3, placement === "hero" ? 450 : 360), videoUrl: videoUrl(publicId, placement === "hero" ? 450 : 360), mobileVideoUrl: videoUrl(publicId, placement === "hero" ? 400 : 300), photos: [] }; }
+function contentItem(publicId: string, displayName: string, position: number, placement: "hero" | "gallery"): ContentItem { const source = videoUrl(publicId); return { id: placement === "hero" ? "hero-existing" : "video-" + position, type: "video", variant: placement === "hero" ? "hero" : "small", placement, position, displayName, autoplay: placement === "hero", startSeconds: 0, endTrimSeconds: 0, coverUrl: frameUrl(publicId, 3), videoUrl: source, mobileVideoUrl: source, photos: [] }; }
 export const fallbackContent: ContentResponse = { hero: contentItem(videos[0].publicId, videos[0].name, 0, "hero"), gallery: videos.slice(1).map((video, index) => contentItem(video.publicId, video.name, index, "gallery")) };
