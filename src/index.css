@@ -155,7 +155,7 @@ h2 { margin: 0; color: #f2f0ed; font-size: clamp(2rem, 3.8vw, 3.35rem); font-wei
 
 .admin-add-video {
   display: grid;
-  grid-template-columns: minmax(190px, .65fr) minmax(280px, 1.4fr) auto auto;
+  grid-template-columns: minmax(190px, .65fr) minmax(160px, .8fr) minmax(260px, 1.4fr) auto auto;
   gap: 12px;
   align-items: end;
   margin: 0 0 28px;

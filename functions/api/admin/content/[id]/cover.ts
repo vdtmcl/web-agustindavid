@@ -1,5 +1,5 @@
 import { requireAuth } from "../../../../_lib/auth";
-import { uploadImage } from "../../../../_lib/cloudinary";
+import { removeStoredMedia, storeImage } from "../../../../_lib/media";
 import { badRequest, json, serverError } from "../../../../_lib/response";
 
 export const onRequestPost = async ({ request, env, params }: any) => {
@@ -10,10 +10,14 @@ export const onRequestPost = async ({ request, env, params }: any) => {
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return badRequest("Falta la imagen.");
-  if (!file.type.startsWith("image/") || file.size > 8 * 1024 * 1024) return badRequest("La portada debe ser una imagen de menos de 8 MB.");
+  if (!file.type.startsWith("image/") || file.size > 8 * 1024 * 1024) return badRequest("La portada debe ser JPG, PNG o WebP de menos de 8 MB.");
+  let publicId: string | null = null;
   try {
-    const publicId = await uploadImage(file, env, "agustindavid/covers/" + params.id);
+    publicId = await storeImage(file, env, request);
     await env.DB.prepare("UPDATE content_items SET cover_public_id = ?1, cover_mode = 'image', updated_at = CURRENT_TIMESTAMP WHERE id = ?2").bind(publicId, params.id).run();
     return json({ ok: true, publicId });
-  } catch (error) { return serverError(error instanceof Error ? error.message : "No fue posible subir la portada."); }
+  } catch (error) {
+    await removeStoredMedia(env, publicId).catch(() => undefined);
+    return serverError(error instanceof Error ? error.message : "No fue posible subir la portada.");
+  }
 };

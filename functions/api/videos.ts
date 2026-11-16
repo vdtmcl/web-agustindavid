@@ -1,17 +1,18 @@
-import { loadContent, syncVideoCatalog } from "../_lib/content";
+import { loadContent } from "../_lib/content";
+import { fallbackContent } from "../../src/content";
 import { json, noStore, serverError } from "../_lib/response";
 
 export const onRequestGet = async ({ env }: any) => {
   try {
-    await syncVideoCatalog(env);
     const content = await loadContent(env);
     const complete = (item: any) => {
-      if (item.type !== "photo_album") return true;
+      if (item.type !== "photo_album") return Boolean(item.videoUrl);
       const required = item.variant === "album-4" ? 4 : item.variant === "album-9" ? 9 : 0;
-      return required > 0 && item.photos.length === required;
+      return required > 0 && item.photos.length === required && item.photos.every((photo: any) => Boolean(photo.thumbUrl));
     };
+    const hero = content.find((item: any) => item.placement === "hero" && complete(item));
     return json({
-      hero: content.find((item: any) => item.placement === "hero") || null,
+      hero: hero || fallbackContent.hero,
       gallery: content.filter((item: any) => item.placement === "gallery" && complete(item)),
     }, { headers: noStore() });
   } catch {
