@@ -1,3 +1,5 @@
+import { localPosters } from "../../src/posters";
+
 function path(publicId: string) {
   return publicId.split("/").map(encodeURIComponent).join("/");
 }
@@ -12,6 +14,7 @@ export function videoUrl(publicId: string, _format: string, maxHeight = 360) {
 
 export function frameUrl(publicId: string, seconds = 3, maxHeight = 360) {
   const source = publicId.replace(/\.[a-z0-9]+$/i, "");
+  if (seconds === 3 && localPosters[source]) return localPosters[source];
   return "https://res.cloudinary.com/" + videoCloudName(publicId) + "/video/upload/so_" + seconds + "/c_limit,h_" + maxHeight + "/f_jpg/q_auto/" + path(source) + ".jpg";
 }
 
